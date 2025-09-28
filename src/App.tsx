@@ -5,6 +5,9 @@ import HomePage from './pages/HomePage';
 import ProfilePage from './pages/ProfilePage';
 import ExplorePage from './pages/ExplorePage';
 import OnboardingPage from './pages/OnboardingPage';
+import FocusAreasPage from './pages/FocusAreasPage';
+import ExperienceGoalsPage from './pages/ExperienceGoalsPage';
+import BioPicturePage from './pages/BioPicturePage';
 import SettingsPage from './pages/SettingsPage';
 import LoginPage from './pages/LoginPage';
 import SignUpPage from './pages/SignUpPage';
@@ -14,6 +17,7 @@ import NotificationsPage from './pages/NotificationsPage';
 import FriendsPage from './pages/FriendsPage';
 import AIDemoPage from './pages/AIDemoPage';
 import ChatPage from './pages/Chat';
+import PersonalInfoPage from './pages/PersonalInfoPage';
 
 class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { error?: Error }> {
   state = { error: undefined as Error | undefined };
@@ -43,7 +47,12 @@ export default function App() {
               <Route path="/" element={<HomePage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/signup" element={<SignUpPage />} />
+              {/* Onboarding flow routes */}
               <Route path="/onboarding" element={<OnboardingPage />} />
+              <Route path="/onboarding/focus-areas" element={<FocusAreasPage />} />
+              <Route path="/onboarding/experience-goals" element={<ExperienceGoalsPage />} />
+              <Route path="/onboarding/bio-picture" element={<BioPicturePage />} />
+              <Route path="/personal-info" element={<PersonalInfoPage />} />
               <Route path="/profile/:username" element={<ProfilePage />} />
               <Route path="/explore" element={<ExplorePage />} />
               <Route path="/settings" element={<SettingsPage />} />
@@ -71,10 +80,12 @@ function NavBar() {
     { to: '/', label: 'HOME' },
     { to: '/connections', label: `CONNECTIONS${incomingCount ? ` (${incomingCount})` : ''}` },
     { to: '/friends', label: 'FRIENDS' },
+    { to: '/personal-info', label: 'BASIC INFO' },
     { to: '/settings', label: 'SETTINGS' }
   ];
   const publicLinks = [
     { to: '/', label: 'HOME' },
+    { to: '/personal-info', label: 'BASIC INFO' },
     { to: '/login', label: 'SIGN IN' },
     { to: '/signup', label: 'JOIN NOW' }
   ];
