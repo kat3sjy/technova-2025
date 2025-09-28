@@ -1,4 +1,4 @@
-import { NavLink, Route, Routes, useNavigate } from 'react-router-dom';
+import { NavLink, Route, Routes, useNavigate, BrowserRouter } from 'react-router-dom';
 import { useUserStore } from './store/userStore';
 import HomePage from './pages/HomePage';
 import ProfilePage from './pages/ProfilePage';
@@ -13,22 +13,24 @@ import ChatPage from './pages/Chat';
 export default function App() {
   return (
     <UserStoreProvider>
-      <div>
-        <NavBar />
-        <div className="container">
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/onboarding" element={<OnboardingPage />} />
-            <Route path="/profile/:username" element={<ProfilePage />} />
-            <Route path="/explore" element={<ExplorePage />} />
-            <Route path="/settings" element={<SettingsPage />} />
-            <Route path="/notifications" element={<NotificationsPage />} />
-            <Route path="/friends" element={<FriendsPage />} />
-            <Route path="/chat" element={<ChatPage />} />
-          </Routes>
+      <BrowserRouter>
+        <div>
+          <NavBar />
+          <div className="container">
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/onboarding" element={<OnboardingPage />} />
+              <Route path="/profile/:username" element={<ProfilePage />} />
+              <Route path="/explore" element={<ExplorePage />} />
+              <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/notifications" element={<NotificationsPage />} />
+              <Route path="/friends" element={<FriendsPage />} />
+              <Route path="/chat" element={<ChatPage />} />
+            </Routes>
+          </div>
+          <footer>© {new Date().getFullYear()} Technova Networking • Empowering connection across gaming, tech, and sports</footer>
         </div>
-        <footer>© {new Date().getFullYear()} Technova Networking • Empowering connection across gaming, tech, and sports</footer>
-      </div>
+      </BrowserRouter>
     </UserStoreProvider>
   );
 }

@@ -11,7 +11,12 @@ export default function HomePage() {
         {!user && <Link to="/onboarding"><button>Get Started</button></Link>}
         {user && <Link to={`/profile/${user.username}`}><button>Your Profile</button></Link>}
         <span style={{ marginLeft: 8 }} />
-        <Link to="/notifications"><button>Messages</button></Link>
+        <Link to="/chat"><button>Messages</button></Link>
+        <Link to="/chat">
+          <button style={{ marginTop: 16 }}>
+            Explore Chat
+          </button>
+        </Link>
       </section>
       <section className="grid" style={{gridTemplateColumns:'repeat(auto-fit,minmax(240px,1fr))'}}>
         <div className="card">
@@ -29,7 +34,7 @@ export default function HomePage() {
         <div className="card">
           <h3>Messages</h3>
           <p>DM friends or chat with your groups.</p>
-          <Link to="/notifications"><button>Open</button></Link>
+          <Link to="/chat"><button>Open</button></Link>
         </div>
       </section>
     </div>
