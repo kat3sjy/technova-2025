@@ -10,6 +10,7 @@ import NotificationsPage from './pages/NotificationsPage';
 import FriendsPage from './pages/FriendsPage';
 import ChatPage from './pages/Chat';
 import SignupPage from './pages/SignupPage';
+import AIDemoPage from './pages/AIDemoPage'; // added
 
 export default function App() {
   return (
@@ -29,6 +30,7 @@ export default function App() {
               <Route path="/chat" element={<ChatPage />} />
               <Route path="/gamemap" element={<GameMapPage />} />
               <Route path="/signup" element={<SignupPage />} />
+              <Route path="/ai-demo" element={<AIDemoPage />} /> {/* added */}
             </Routes>
           </div>
           <footer>© {new Date().getFullYear()} Technova Networking • Empowering connection across gaming, tech, and sports</footer>
@@ -48,7 +50,8 @@ function NavBar() {
     { to: '/friends', label: 'Friends' },
     { to: '/onboarding', label: 'Onboarding' },
     { to: '/settings', label: 'Settings' },
-    { to: '/chat', label: 'Chat' } // added
+    { to: '/chat', label: 'Chat' },
+    { to: '/ai-demo', label: 'AI Demo' }, // added
   ];
   return (
     <nav>

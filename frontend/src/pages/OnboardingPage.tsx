@@ -5,7 +5,7 @@ import { generateUsername } from '../utils/generateUsername';
 import { validatePassword } from '../utils/password';
 import { LOCATION_OPTIONS } from '../utils/locations';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
 interface FormState {
   firstName: string;
@@ -198,7 +198,7 @@ export default function OnboardingPage() {
     </div>,
     <div key="s2">
       <h2>Focus Areas</h2>
-      <div className="grid" style={{gridTemplateColumns:'repeat(auto-fit,minmax(140px,1fr))'}}>
+      <div className="focus-areas" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
         {AREA_OPTIONS.map((opt: string) => {
           const active = form.areas.includes(opt);
           return (
@@ -206,11 +206,15 @@ export default function OnboardingPage() {
               type="button"
               key={opt}
               onClick={() => toggleArea(opt)}
-              aria-pressed={active}
-              aria-label={`${opt}${active ? ' selected' : ''}`}
+              className={`chip-btn ${active ? 'primary' : ''}`}
               style={{
-                background: active ? '#ff9bd2' : '#222a35',
-                color: active ? '#181a1f' : '#d0d9e5'
+                border: '1px solid',
+                borderColor: active ? '#ff4fa3' : '#d0d9e5',
+                background: active ? 'linear-gradient(90deg,#ff4fa3,#ff9bd2)' : 'transparent',
+                color: active ? '#181a1f' : '#d0d9e5',
+                borderRadius: 9999,
+                padding: '6px 10px',
+                fontSize: '.85rem'
               }}
             >
               {opt}
@@ -362,7 +366,11 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="grid" style={{gap:'1.25rem', maxWidth:680}}>
+    <div className="grid" style={{ gap:'1.25rem', maxWidth:680, margin:'24px auto', padding:16 }}>
+      <div className="card">
+        <h1 style={{ marginTop: 0 }}>Onboarding</h1>
+        <div style={{ opacity: 0.75 }}>Set up your profile to get started.</div>
+      </div>
       <Progress value={(step+1)/steps.length} />
       <div className="card">
         {steps[step]}
@@ -384,7 +392,7 @@ function FormRow({label, children}:{label:string; children:React.ReactNode}) {
 function Progress({value}:{value:number}) {
   return (
     <div style={{height:10, background:'#222a35', borderRadius:8, overflow:'hidden'}}>
-      <div style={{height:'100%', width:`${Math.round(value*100)}%`, background:'linear-gradient(90deg,#ff4fa3,#ff9bd2)`}} />
+      <div style={{height:'100%', width:`${Math.round(value*100)}%`, background:'linear-gradient(90deg,#ff4fa3,#ff9bd2)'}} />
     </div>
   );
 }
