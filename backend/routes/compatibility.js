@@ -1,6 +1,6 @@
 import express from 'express';
 import { MongoClient } from 'mongodb';
-import { analyzeCompatibility } from '../scripts/analyze-compatibility.js';
+import { analyzeCompatibility, healthCheckGemini } from '../scripts/analyze-compatibility.js';
 
 const router = express.Router();
 
@@ -15,22 +15,52 @@ async function getClient() {
   return client;
 }
 
+router.get('/api/compat/ai-health', async (req, res) => {
+  try {
+    const hc = await healthCheckGemini();
+    res.json({
+      ok: !!hc.ok,
+      provider: 'gemini',
+      model: hc.model,
+      reply: hc.reply,
+      error: hc.error,
+      reason: hc.reason,
+    });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e?.message || String(e) });
+  }
+});
+
 router.post('/api/compat/analyze', async (req, res) => {
   try {
-    if (!MONGO_URI) return res.status(500).json({ error: 'Missing MONGO_URI' });
-    const ids = Array.isArray(req.body?.ids) ? req.body.ids.join(',') : (req.body?.ids || '');
+    if (!MONGO_URI) return res.status(500).json({ ok: false, error: 'Missing MONGO_URI' });
+    const ids = Array.isArray(req.body?.ids)
+      ? req.body.ids.join(',')
+      : (req.body?.ids || req.query?.ids || '');
     const cli = await getClient();
     const db = cli.db(DB_NAME);
 
-    const { users, output } = await analyzeCompatibility(db, ids || undefined);
+    const { users, analysis, prompt } = await analyzeCompatibility(db, ids || undefined);
+
+    console.log('--- Gemini Compatibility Analysis ---');
+    console.log(analysis);
+    console.log('-------------------------------------');
+
     res.json({
       ok: true,
+      analysis,
+      text: analysis,
+      result: analysis,
+      message: analysis,
+      content: analysis,
+      prompt,
       users: users.map(u => ({
         _id: u._id,
         username: u.username || u.name || '',
-        vibeTags: Array.isArray(u.vibeTags) ? u.vibeTags : [],
+        goals: Array.isArray(u.goals) ? u.goals : (u.goals ? [u.goals] : []),
+        location: u.location || '',
+        experienceLevel: u.experienceLevel || '',
       })),
-      resultText: output,
     });
   } catch (e) {
     res.status(500).json({ ok: false, error: e?.message || String(e) });

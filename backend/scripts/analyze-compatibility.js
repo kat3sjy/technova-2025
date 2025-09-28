@@ -65,16 +65,28 @@ export async function fetchUsers(db, idsArgLocal) {
       });
     const cursor = col.find(
       { _id: { $in: ids } },
-      { projection: { username: 1, name: 1, vibeTags: 1 } }
+      { projection: { username: 1, name: 1, goals: 1, location: 1, experienceLevel: 1 } }
     );
     const docs = await cursor.toArray();
     return docs;
   }
-  const cursor = col.find(
-    { vibeTags: { $exists: true } },
-    { projection: { username: 1, name: 1, vibeTags: 1 } }
-  ).limit(10);
-  const docs = (await cursor.toArray()).filter(u => Array.isArray(u.vibeTags) && u.vibeTags.length > 0);
+
+  // Prefer users that have at least one of the three fields, otherwise fall back to any
+  const projection = { username: 1, name: 1, goals: 1, location: 1, experienceLevel: 1 };
+  let docs = await col.find(
+    {
+      $or: [
+        { goals: { $exists: true } },
+        { location: { $exists: true } },
+        { experienceLevel: { $exists: true } },
+      ]
+    },
+    { projection }
+  ).sort({ _id: -1 }).limit(10).toArray();
+
+  if (docs.length < 2) {
+    docs = await col.find({}, { projection }).sort({ _id: -1 }).limit(2).toArray();
+  }
   return docs.slice(0, 2);
 }
 
@@ -85,29 +97,40 @@ function userLabel(u, label) {
   return `${label}${nm}${id}`;
 }
 
+// New: normalize for AI prompt
+function normalizeUserForAI(u) {
+  return {
+    username: u.username || u.name || '',
+    goals: Array.isArray(u.goals) ? u.goals : (u.goals ? [u.goals] : []),
+    location: u.location || '',
+    experienceLevel: u.experienceLevel || '',
+  };
+}
+
 export function buildPrompt(u1, u2) {
+  const a = normalizeUserForAI(u1);
+  const b = normalizeUserForAI(u2);
   return [
-    'You are a concise match analyst for cooperative gaming partners.',
-    'Given two users with arrays of vibeTags (qualities/preferences), assess their compatibility.',
-    'Return:',
-    '- A single numeric Compatibility Score from 0 to 100.',
-    '- 2-3 bullet points on key overlaps and differences.',
-    '- One-sentence summary.',
-    'Keep it brief and actionable.',
+    'You are an expert at group matching.',
+    'Use ONLY these fields per user: goals, location, experienceLevel.',
+    'Return a concise analysis of compatibility and suggested groupings.',
     '',
     `${userLabel(u1, 'User A')}:`,
-    `vibeTags: ${JSON.stringify(u1.vibeTags)}`,
+    `goals: ${JSON.stringify(a.goals)}`,
+    `location: ${a.location || ''}`,
+    `experienceLevel: ${a.experienceLevel || ''}`,
     '',
     `${userLabel(u2, 'User B')}:`,
-    `vibeTags: ${JSON.stringify(u2.vibeTags)}`,
+    `goals: ${JSON.stringify(b.goals)}`,
+    `location: ${b.location || ''}`,
+    `experienceLevel: ${b.experienceLevel || ''}`,
   ].join('\n');
 }
 
+// Add back: Gemini call helper
 export async function callGemini(prompt) {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(GEMINI_MODEL)}:generateContent`;
-  const body = {
-    contents: [{ role: 'user', parts: [{ text: prompt }]}],
-  };
+  const body = { contents: [{ role: 'user', parts: [{ text: prompt }]}] };
   const res = await fetch(url, {
     method: 'POST',
     headers: {
@@ -117,51 +140,68 @@ export async function callGemini(prompt) {
     body: JSON.stringify(body),
   });
   if (!res.ok) {
-    const txt = await res.text().catch(() => '');
-    throw new Error(`Gemini API error ${res.status}: ${txt || res.statusText}`);
+    const text = await res.text().catch(() => '');
+    throw new Error(`Gemini error ${res.status}: ${text}`);
   }
-  const data = await res.json();
-  // Try common fields across Gemini responses
+  const json = await res.json();
   const text =
-    data.candidates?.[0]?.content?.parts?.map(p => p.text).join('\n').trim() ||
-    data.candidates?.[0]?.output_text?.trim() ||
-    '';
-  return text || JSON.stringify(data, null, 2);
+    json?.candidates?.[0]?.content?.parts
+      ?.map(p => p?.text)
+      ?.filter(Boolean)
+      ?.join('') || '';
+  return text.trim();
 }
 
-// New: a reusable function for API and CLI
+// New: lightweight health check for Gemini API
+export async function healthCheckGemini() {
+  if (!GEMINI_API_KEY) {
+    return { ok: false, reason: 'missing_api_key', model: GEMINI_MODEL };
+  }
+  try {
+    const reply = await callGemini('Reply with "pong" only.');
+    const ok = /^pong$/i.test(reply.trim());
+    return { ok, model: GEMINI_MODEL, reply };
+  } catch (err) {
+    return { ok: false, model: GEMINI_MODEL, error: err?.message || String(err) };
+  }
+}
+
+// New: high-level helper to run the full analysis flow
 export async function analyzeCompatibility(db, idsArgLocal) {
   const users = await fetchUsers(db, idsArgLocal);
   if (!users || users.length < 2) {
-    throw new Error('Need at least 2 users with non-empty vibeTags (or provide exactly two via --ids)');
+    throw new Error('Need at least two users to analyze.');
   }
   const [u1, u2] = users.slice(0, 2);
   const prompt = buildPrompt(u1, u2);
-  const output = await callGemini(prompt);
-  return { users: [u1, u2], output };
+  const analysis = await callGemini(prompt);
+  return { users: [u1, u2], prompt, analysis };
 }
 
+// CLI entrypoint (only runs when executed directly)
 async function main() {
-  console.log(`[compat] Connecting to MongoDB: ${redactUri(MONGO_URI)} db=${DB_NAME}`);
-  const client = new MongoClient(MONGO_URI, { retryWrites: true, w: 'majority' });
+  const client = new MongoClient(MONGO_URI);
   try {
     await client.connect();
     const db = client.db(DB_NAME);
+    console.error(`Connected to ${redactUri(MONGO_URI)}/${DB_NAME}`);
 
-    // Updated to pass idsArg explicitly
-    const { users, output } = await analyzeCompatibility(db, idsArg);
-    const [u1, u2] = users;
-    console.log(`[compat] Comparing: ${userLabel(u1, 'A')} vs ${userLabel(u2, 'B')}`);
+    const { users, analysis } = await analyzeCompatibility(db, idsArg);
 
-    console.log('\n=== Compatibility Analysis ===');
-    console.log(output);
-    console.log('==============================\n');
-  } catch (err) {
-    console.error('[compat] Error:', err?.message || err);
-    process.exitCode = 1;
+    console.log('--- Compatibility Analysis ---');
+    console.log(analysis);
+    console.log('');
+    console.log(userLabel(users[0], 'User A'));
+    console.log(userLabel(users[1], 'User B'));
   } finally {
-    try { await client.close(); } catch {}
+    await client.close().catch(() => {});
   }
 }
 
-main();
+const isDirect = (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url));
+if (isDirect) {
+  main().catch(err => {
+    console.error(err);
+    process.exit(1);
+  });
+}

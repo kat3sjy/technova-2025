@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
+import { useNavigate } from "react-router-dom";
 import { useUserStore } from '../store/userStore';
 import { generateUsername } from '../utils/generateUsername';
-import { validatePassword, hashPassword, storeCredentials, getStoredCredentials } from '../utils/password';
+import { validatePassword } from '../utils/password';
 import { LOCATION_OPTIONS } from '../utils/locations';
+
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 
 interface FormState {
   firstName: string;
@@ -23,7 +26,6 @@ const EXPERIENCE_LEVELS = ['Student', 'Early Career', 'Mid Career', 'Senior', 'L
 export default function OnboardingPage() {
   const { user, setUser } = useUserStore() as { user: any; setUser: (user: any) => void };
   const [step, setStep] = useState(0);
-  const existingCreds = getStoredCredentials();
   const [form, setForm] = useState<FormState>({
     firstName: '', lastName: '', areas: [], goals: '', experienceLevel: '', bio: '', location: '',
     username: '', password: '', passwordConfirm: ''
@@ -90,21 +92,52 @@ export default function OnboardingPage() {
     setPwdIssues(combined);
     if (combined.length) return;
 
-    const passwordHash = await hashPassword(form.password);
-    storeCredentials({ username: safeUsername, passwordHash, createdAt: new Date().toISOString() });
+    try {
+      const signupRes = await fetch(`${API_BASE}/api/auth/signup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          username: safeUsername,
+          password: form.password
+        })
+      });
+      if (!signupRes.ok && signupRes.status !== 409) {
+        const j = await signupRes.json().catch(() => ({}));
+        throw new Error(j?.error || 'Failed to create account');
+      }
+    } catch (e) {
+      // proceed if 409
+    }
 
-    setUser({
-      id: crypto.randomUUID(),
-      username: safeUsername,
-      firstName: form.firstName,
-      lastName: form.lastName,
-      areas: form.areas,
-      goals: form.goals,
-      experienceLevel: form.experienceLevel,
-      bio: form.bio,
-      location: form.location,
-      createdAt: new Date().toISOString()
+    // Save profile fields into the users collection
+    const profileRes = await fetch(`${API_BASE}/api/users/profile`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        username: safeUsername,
+        firstName: form.firstName,
+        lastName: form.lastName,
+        tags: form.areas,
+        experienceLevel: form.experienceLevel,
+        goals: form.goals,
+        bio: form.bio,
+        location: form.location
+      })
     });
+
+    if (!profileRes.ok) {
+      const j = await profileRes.json().catch(() => ({}));
+      setUsernameError(j?.error || 'Unable to save profile');
+      return;
+    }
+
+    const out = await profileRes.json().catch(() => ({} as any));
+    const saved = out?.user || out;
+
+    // Persist to store
+    setUser(saved);
   }
 
   const steps = [
@@ -176,8 +209,11 @@ export default function OnboardingPage() {
               aria-pressed={active}
               aria-label={`${opt}${active ? ' selected' : ''}`}
               style={{
-                background: active ? '#ff9bd2' : '#222a35',
-                color: active ? '#181a1f' : '#d0d9e5'
+                background: active ? 'linear-gradient(90deg,#ff4fa3,#ff9bd2)' : '#222a35',
+                color: active ? '#181a1f' : '#d0d9e5',
+                borderRadius: 9999,
+                padding: '6px 10px',
+                fontSize: '.85rem'
               }}
             >
               {opt}
@@ -329,7 +365,11 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="grid" style={{gap:'1.25rem', maxWidth:680}}>
+    <div className="grid" style={{ gap:'1.25rem', maxWidth:680, margin:'24px auto', padding:16 }}>
+      <div className="card">
+        <h1 style={{ marginTop: 0 }}>Onboarding</h1>
+        <div style={{ opacity: 0.75 }}>Set up your profile to get started.</div>
+      </div>
       <Progress value={(step+1)/steps.length} />
       <div className="card">
         {steps[step]}
@@ -350,7 +390,7 @@ function FormRow({label, children}:{label:string; children:React.ReactNode}) {
 
 function Progress({value}:{value:number}) {
   return (
-    <div style={{height:10, background:'#222a35', borderRadius:8, overflow:'hidden'}}>
+    <div style={{height:10, background:'#222a35', borderRadius:8, overflow:'hidden'}}></div>
       <div style={{height:'100%', width:`${Math.round(value*100)}%`, background:'linear-gradient(90deg,#ff4fa3,#ff9bd2)`}} />
     </div>
   );

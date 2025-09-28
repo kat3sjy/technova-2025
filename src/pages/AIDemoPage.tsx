@@ -3,7 +3,7 @@ import { useState } from 'react';
 type UserPreview = {
   _id: string;
   username: string;
-  vibeTags: string[];
+  goals: string[];
 };
 
 export default function AIDemoPage() {
@@ -29,8 +29,17 @@ export default function AIDemoPage() {
         throw new Error(msg || `HTTP ${res.status}`);
       }
       const data = await res.json();
+      console.log('AI analyze response:', data);
       setUsers(data.users || []);
-      setResult(data.resultText || '');
+      setResult(
+        data.analysis ||
+        data.text ||
+        data.result ||
+        data.message ||
+        data.content ||
+        data.resultText ||
+        ''
+      );
     } catch (e: any) {
       setError(e?.message || 'Request failed');
     } finally {
@@ -57,7 +66,7 @@ export default function AIDemoPage() {
           <div key={u._id} style={{ border: '1px solid #ddd', borderRadius: 8, padding: 12 }}>
             <h3 style={{ marginTop: 0 }}>{u.username || '(unknown user)'}</h3>
             <ul style={{ margin: 0, paddingLeft: 18 }}>
-              {(u.vibeTags || []).map((t, i) => (
+              {(u.goals || []).map((t, i) => (
                 <li key={i}>{t}</li>
               ))}
             </ul>
