@@ -22,33 +22,21 @@ export default function HomePage() {
           <div className="hero-actions">
             {!user ? (
               <>
-                <Link to="/login" className="hero-btn primary">
-                  sign in
-                </Link>
+                <Link to="/login" className="hero-btn primary">sign in</Link>
                 <span className="hero-divider">or</span>
-                <Link to="/signup" className="hero-btn secondary">
-                  create account
-                </Link>
+                <Link to="/signup" className="hero-btn secondary">create account</Link>
               </>
             ) : (
               <>
-                <Link to={`/profile/${user.username}`} className="hero-btn primary">
-                  Your Profile
-                </Link>
+                <Link to={`/profile/${user.username}`} className="hero-btn primary">Your Profile</Link>
                 <span className="hero-divider">or</span>
-                <Link to="/explore" className="hero-btn secondary">
-                  explore community
-                </Link>
+                <Link to="/explore" className="hero-btn secondary">explore community</Link>
               </>
             )}
           </div>
-        )}
-          
-        {user && <Link to={`/profile/${user.username}`}><button>Your Profile</button></Link>}
-        <span style={{ marginLeft: 8 }} />
-        <Link to="/chat"><button>Messages</button></Link>
-        <div style={{ marginTop: 12 }}>
-          <Link to="/ai-demo">Try the AI Demo</Link>
+          <div style={{ marginTop: 12 }}>
+            <Link to="/ai-demo">Try the AI Demo</Link>
+          </div>
         </div>
       </div>
 
@@ -77,14 +65,9 @@ export default function HomePage() {
           <p>DM friends or chat with your groups.</p>
           <Link to="/chat"><button>Open</button></Link>
         </div>
-        {user ? (
-          <div className="card">
-            <h3>Messages</h3>
-            <p>DM friends or chat with your groups.</p>
-            <Link to="/chat"><button>Open</button></Link>
       </div>
 
-      {/* Info Cards Grid */}
+      
       <div className="info-grid">
         <div className="info-card">
           <div className="card-icon">

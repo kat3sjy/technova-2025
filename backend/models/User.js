@@ -18,14 +18,31 @@ const SafetySchema = new mongoose.Schema(
 
 const UserSchema = new mongoose.Schema(
   {
+    firstName: { type: String, trim: true, default: "" },
+    lastName: { type: String, trim: true, default: "" },
     username: { type: String, required: true, unique: true, trim: true },
     email: { type: String, trim: true, index: true, sparse: true },
     location: { type: String, trim: true },
     tags: { type: [String], default: [] }, // interests
     bio: { type: String, default: "" },
+  passwordHash: { type: String, select: false },
+    goals: { type: String, default: "" },
+    experienceLevel: { type: String, default: "" },
     avatar: { type: AvatarSchema, default: () => ({}) },
     vibeTags: { type: [String], default: [] },
-    safety: { type: SafetySchema, default: () => ({}) }
+    safety: { type: SafetySchema, default: () => ({}) },
+    friends: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    notifications: {
+      type: [
+        {
+          type: { type: String, enum: ["match", "dm"], required: true },
+          from: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+          message: { type: String },
+          status: { type: String, enum: ["pending", "approved", "rejected"], default: "pending" }
+        }
+      ],
+      default: () => []
+    }
   },
   { timestamps: true }
 );

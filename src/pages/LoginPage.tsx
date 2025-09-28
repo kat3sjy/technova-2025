@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useUserStore } from '../store/userStore';
-import { hashPassword, getStoredCredentials } from '../utils/password';
 import "./home-style.css";
 
 export default function LoginPage() {
@@ -26,45 +25,36 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const storedCreds = getStoredCredentials();
-      
-      if (!storedCreds) {
-        setError('No account found. Please create an account first.');
-        setIsLoading(false);
-        return;
-      }
-
       const enteredUsername = form.username.trim().toLowerCase();
-      if (enteredUsername !== storedCreds.username) {
-        setError('Invalid username or password.');
-        setIsLoading(false);
-        return;
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: enteredUsername, password: form.password })
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err?.error || 'Invalid username or password.');
       }
-
-      const enteredPasswordHash = await hashPassword(form.password);
-      if (enteredPasswordHash !== storedCreds.passwordHash) {
-        setError('Invalid username or password.');
-        setIsLoading(false);
-        return;
-      }
-
-      // Login successful - retrieve user data from localStorage
-      const userKey = 'technova_user_v1';
-      const userData = localStorage.getItem(userKey);
-      
-      if (userData) {
-        const parsedUser = JSON.parse(userData);
-        setUser(parsedUser);
-        navigate('/explore');
-      } else {
-        setError('User profile not found. Please complete onboarding.');
-      }
-      
-    } catch (err) {
-      setError('Login failed. Please try again.');
+      const userDoc = await res.json();
+      setUser({
+        id: userDoc._id,
+        username: userDoc.username,
+        firstName: userDoc.firstName || '',
+        lastName: userDoc.lastName || '',
+        areas: userDoc.tags || [],
+        goals: userDoc.goals || '',
+        experienceLevel: userDoc.experienceLevel || '',
+        bio: userDoc.bio || '',
+        location: userDoc.location || '',
+        createdAt: userDoc.createdAt || new Date().toISOString()
+      });
+      navigate('/explore');
+    } catch (err: any) {
+      const msg = err?.message || 'Login failed. Please try again.';
+      setError(msg);
+    } finally {
+      setIsLoading(false);
     }
-    
-    setIsLoading(false);
   }
 
   const handleBack = () => {

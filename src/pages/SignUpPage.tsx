@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useUserStore } from '../store/userStore';
-import { validatePassword, hashPassword, storeCredentials, getStoredCredentials } from '../utils/password';
+import { validatePassword } from '../utils/password';
 import "./home-style.css";
 
 export default function SignUpPage() {
@@ -48,50 +48,31 @@ export default function SignUpPage() {
         return;
       }
 
-      // Check if username already exists
-      const existingCreds = getStoredCredentials();
-      if (existingCreds && existingCreds.username === form.username.trim().toLowerCase()) {
-        setError('Username already exists. Please choose a different one.');
-        setIsLoading(false);
-        return;
-      }
-
-      // Check if user exists in users array
-      const existingUser = users?.find((u: any) => u.username === form.username.trim().toLowerCase());
-      if (existingUser) {
-        setError('Username already exists. Please choose a different one.');
-        setIsLoading(false);
-        return;
-      }
-
-      // Hash password and store credentials
-      const passwordHash = await hashPassword(form.password);
-      storeCredentials({
-        username: form.username.trim().toLowerCase(),
-        passwordHash,
-        createdAt: new Date().toISOString()
+      // Create account via backend
+      const res = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: form.username.trim().toLowerCase(), password: form.password })
       });
-
-      // Create user with basic info (they can complete profile later)
-      const newUser = {
-        username: form.username.trim().toLowerCase(),
-        firstName: '',
-        lastName: '',
-        location: '',
-        areas: [],
-        experienceLevel: '',
-        goals: '',
-        bio: '',
-        profilePicture: '',
-        connections: [],
-        incomingRequests: [],
-        outgoingRequests: []
-      };
-
-      // Register user
-      registerUser(newUser);
-
-      // Navigate to onboarding to complete profile
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err?.error || 'Failed to create account');
+      }
+      const userDoc = await res.json();
+      // Minimal store set; onboarding will complete profile
+      registerUser({
+        id: userDoc._id,
+        username: userDoc.username,
+        firstName: userDoc.firstName || '',
+        lastName: userDoc.lastName || '',
+        areas: userDoc.tags || [],
+        goals: userDoc.goals || '',
+        experienceLevel: userDoc.experienceLevel || '',
+        bio: userDoc.bio || '',
+        location: userDoc.location || '',
+        createdAt: userDoc.createdAt || new Date().toISOString()
+      });
+      // Go to onboarding to fill remaining fields
       navigate('/onboarding');
       
     } catch (err) {

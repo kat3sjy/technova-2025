@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useUserStore } from '../store/userStore';
 import { generateUsername } from '../utils/generateUsername';
-import { validatePassword, hashPassword, storeCredentials, getStoredCredentials } from '../utils/password';
+import { validatePassword } from '../utils/password';
 import { handleImageUpload, validateImageFile } from '../utils/imageUpload';
 import { getCountries, getCities } from '../utils/locationData';
 
@@ -27,7 +27,7 @@ const EXPERIENCE_LEVELS = ['Student', 'Newbie', 'Amateur', 'Intermediate', 'Pro'
 export default function OnboardingPage() {
   const { user, registerUser, getUserByUsername, users } = useUserStore() as any;
   const [step, setStep] = useState(0);
-  const existingCreds = getStoredCredentials();
+  const existingCreds = undefined as any;
   const [form, setForm] = useState<FormState>({
     username: existingCreds?.username || '', password: '', passwordConfirm: '',
     firstName: '', lastName: '', country: '', city: '', location: '', areas: [], experienceLevel: '', goals: '', bio: '',
@@ -105,31 +105,44 @@ export default function OnboardingPage() {
     const pwdProblems = validatePassword(form.password);
     const mismatch = form.password !== form.passwordConfirm;
     if (pwdProblems.length || mismatch) { setPwdIssues([...pwdProblems, ...(mismatch? ['Passwords do not match']: [])]); return; }
-    const passwordHash = await hashPassword(form.password);
-    storeCredentials({ username: uname.toLowerCase(), passwordHash, createdAt: new Date().toISOString() });
+    // Create account if not exists
     try {
-      const combinedLocation = form.country && form.city ? `${form.city}, ${form.country}` : form.country || form.city || '';
-      registerUser({
-        id: crypto.randomUUID(),
-        username: uname.toLowerCase(),
-        firstName: form.firstName,
-        lastName: form.lastName,
-        areas: form.areas,
-        goals: form.goals,
-        experienceLevel: form.experienceLevel,
-        bio: form.bio,
-        location: combinedLocation,
-        avatarUrl: form.profilePicture || undefined,
-        createdAt: new Date().toISOString()
+      const signupRes = await fetch('/api/auth/signup', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: uname.toLowerCase(), password: form.password })
       });
-    } catch (e: any) {
-      if (e?.message === 'USERNAME_TAKEN') {
-        setUsernameError('Username already taken');
-      } else {
-        setUsernameError('Unable to create user');
+      if (!signupRes.ok && signupRes.status !== 409) {
+        const j = await signupRes.json().catch(() => ({}));
+        throw new Error(j?.error || 'Failed to create account');
       }
+    } catch (e) {
+      // If 409 username taken, we proceed to update profile of existing user
+    }
+    // Update profile fields
+    const combinedLocation = form.country && form.city ? `${form.city}, ${form.country}` : form.country || form.city || '';
+    const profileRes = await fetch('/api/profile', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: uname.toLowerCase(), firstName: form.firstName, lastName: form.lastName, tags: form.areas, experienceLevel: form.experienceLevel, goals: form.goals, bio: form.bio, location: combinedLocation })
+    });
+    if (!profileRes.ok) {
+      const j = await profileRes.json().catch(() => ({}));
+      setUsernameError(j?.error || 'Unable to save profile');
       return;
     }
+    const userDoc = await profileRes.json();
+    registerUser({
+      id: userDoc._id,
+      username: userDoc.username,
+      firstName: userDoc.firstName || '',
+      lastName: userDoc.lastName || '',
+      areas: userDoc.tags || [],
+      goals: userDoc.goals || '',
+      experienceLevel: userDoc.experienceLevel || '',
+      bio: userDoc.bio || '',
+      location: userDoc.location || '',
+      createdAt: userDoc.createdAt || new Date().toISOString(),
+      avatarUrl: form.profilePicture || undefined
+    });
   }
 
   const steps = [

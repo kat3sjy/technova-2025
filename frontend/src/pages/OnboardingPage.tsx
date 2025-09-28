@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
+import { useNavigate } from "react-router-dom";
 import { useUserStore } from '../store/userStore';
 import { generateUsername } from '../utils/generateUsername';
-import { validatePassword, hashPassword, storeCredentials, getStoredCredentials } from '../utils/password';
+import { validatePassword } from '../utils/password';
 import { LOCATION_OPTIONS } from '../utils/locations';
 
 interface FormState {
@@ -23,7 +24,6 @@ const EXPERIENCE_LEVELS = ['Student', 'Early Career', 'Mid Career', 'Senior', 'L
 export default function OnboardingPage() {
   const { user, setUser } = useUserStore() as { user: any; setUser: (user: any) => void };
   const [step, setStep] = useState(0);
-  const existingCreds = getStoredCredentials();
   const [form, setForm] = useState<FormState>({
     firstName: '', lastName: '', areas: [], goals: '', experienceLevel: '', bio: '', location: '',
     username: '', password: '', passwordConfirm: ''
@@ -87,21 +87,43 @@ export default function OnboardingPage() {
     setPwdIssues(combined);
     if (combined.length) return;
 
-    const passwordHash = await hashPassword(form.password);
-    storeCredentials({ username: safeUsername, passwordHash, createdAt: new Date().toISOString() });
-
-    setUser({
-      id: crypto.randomUUID(),
-      username: safeUsername,
-      firstName: form.firstName,
-      lastName: form.lastName,
-      areas: form.areas,
-      goals: form.goals,
-      experienceLevel: form.experienceLevel,
-      bio: form.bio,
-      location: form.location,
-      createdAt: new Date().toISOString()
-    });
+    try {
+      const res = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: safeUsername,
+          password: form.password,
+          firstName: form.firstName,
+          lastName: form.lastName,
+          location: form.location,
+          tags: form.areas,
+          bio: form.bio,
+          goals: form.goals,
+          experienceLevel: form.experienceLevel
+        })
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err?.error || 'Failed to create profile');
+      }
+      const saved = await res.json();
+      setUser({
+        id: saved._id,
+        username: saved.username,
+        firstName: saved.firstName || form.firstName,
+        lastName: saved.lastName || form.lastName,
+        areas: saved.tags || form.areas,
+        goals: saved.goals || form.goals,
+        experienceLevel: saved.experienceLevel || form.experienceLevel,
+        bio: saved.bio || form.bio,
+        location: saved.location || form.location,
+        createdAt: saved.createdAt || new Date().toISOString()
+      });
+    } catch (e: any) {
+      alert(e?.message || 'Failed to save profile');
+      return;
+    }
   }
 
   const steps = [
