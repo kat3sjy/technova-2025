@@ -51,7 +51,7 @@
 }
 
 .hero-description {
-  font-size: 1.1rem;
+  font-size: 1.25rem;
   line-height: 1.6;
   color: #e5e7eb;
   margin: 0 0 2.5rem 0;
@@ -102,7 +102,7 @@
 
 .hero-divider {
   color: #e5e7eb;
-  font-size: 0.9rem;
+  font-size: 1.05rem;
   opacity: 0.8;
 }
 
@@ -184,7 +184,7 @@
 
 .community-text p {
   margin: 0 0 1.5rem 0;
-  font-size: 0.95rem;
+  font-size: 1.1rem;
 }
 
 .quest-popup {
@@ -206,7 +206,7 @@
   color: white;
   padding: 0.25rem 0.75rem;
   border-radius: 8px;
-  font-size: 0.8rem;
+  font-size: 0.95rem;
   font-weight: 700;
   text-transform: uppercase;
   margin-bottom: 0.5rem;
@@ -216,7 +216,7 @@
 .quest-content {
   color: #1a1d3a;
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 1.05rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -317,7 +317,7 @@
   color: #e5e7eb;
   line-height: 1.6;
   margin: 0;
-  font-size: 0.95rem;
+  font-size: 1.1rem;
 }
 
 /* Responsive Design */
@@ -386,7 +386,7 @@
 .form-label {
   font-family: 'Jua', cursive;
   color: #ffffff;
-  font-size: 0.9rem;
+  font-size: 1.05rem;
   font-weight: 600;
   text-transform: lowercase;
 }
@@ -398,7 +398,7 @@
   border-radius: 12px;
   padding: 0.75rem 1rem;
   color: #ffffff;
-  font-size: 1rem;
+  font-size: 1.05rem;
   transition: all 0.3s ease;
 }
 
@@ -430,7 +430,7 @@
   color: #ff6b6b;
   padding: 0.75rem 1rem;
   border-radius: 8px;
-  font-size: 0.9rem;
+  font-size: 1.05rem;
   text-align: center;
   border: 1px solid rgba(255, 75, 75, 0.3);
 }
@@ -443,6 +443,7 @@
 .auth-switch p {
   color: rgba(255, 255, 255, 0.8);
   margin: 0;
+  font-size: 1.05rem;
 }
 
 .auth-link {

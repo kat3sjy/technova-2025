@@ -14,6 +14,7 @@ import NotificationsPage from './pages/NotificationsPage';
 import FriendsPage from './pages/FriendsPage';
 import AIDemoPage from './pages/AIDemoPage';
 import ChatPage from './pages/Chat';
+import MessagesPage from './pages/MessagesPage';
 
 class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { error?: Error }> {
   state = { error: undefined as Error | undefined };
@@ -52,8 +53,7 @@ export default function App() {
               <Route path="/friends" element={<FriendsPage />} />
               <Route path="/ai-demo" element={<AIDemoPage />} />
               <Route path="/chat" element={<ChatPage />} />
-              {/* Redirect legacy /messages -> /chat */}
-              <Route path="/messages" element={<Navigate to="/chat" replace />} />
+              <Route path="/messages" element={<MessagesPage />} />
             </Routes>
           </div>
           <footer>© {new Date().getFullYear()} Ctrl+Femme • Empowering connection across gaming, tech, and sports</footer>
@@ -71,6 +71,7 @@ function NavBar() {
     { to: '/', label: 'HOME' },
     { to: '/connections', label: `CONNECTIONS${incomingCount ? ` (${incomingCount})` : ''}` },
     { to: '/friends', label: 'FRIENDS' },
+    { to: '/messages', label: 'MESSAGES' },
     { to: '/settings', label: 'SETTINGS' }
   ];
   const publicLinks = [

@@ -46,8 +46,6 @@ export default function HomePage() {
           {/* Additional user actions */}
           {user && (
             <div style={{ marginTop: 16 }}>
-              <Link to="/chat"><button>Messages</button></Link>
-              <span style={{ marginLeft: 8 }} />
               <Link to="/ai-demo"><button>Try AI Demo</button></Link>
             </div>
           )}

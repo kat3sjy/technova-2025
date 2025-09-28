@@ -1,0 +1,87 @@
+/* Messages page styling to match homepage purple rectangles and button styles */
+
+.panel-purple {
+  background: linear-gradient(135deg, #4c4b9f 0%, #6b5b95 100%);
+  border-radius: 20px;
+  border: 1px solid rgba(139, 124, 163, 0.3);
+  position: relative;
+  overflow: hidden;
+  font-family: 'Jua', cursive;
+}
+
+.panel-purple::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.05);
+  pointer-events: none;
+}
+
+/* Button styles inspired by homepage hero buttons */
+.btn-white {
+  background: rgba(255, 255, 255, 0.95) !important;
+  color: #4c4b9f !important;
+  border: 2px solid transparent !important;
+  font-family: 'Jua', cursive;
+  font-size: 1rem;
+}
+.btn-white:hover {
+  background: #ffffff !important;
+  color: #4c4b9f !important;
+}
+
+.btn-purple {
+  background: rgba(255, 255, 255, 0.2) !important;
+  border: 2px solid rgba(255, 255, 255, 0.3) !important;
+  color: #ffffff !important;
+  font-family: 'Jua', cursive;
+  font-size: 1rem;
+}
+.btn-purple:hover {
+  background: rgba(255, 255, 255, 0.3) !important;
+  border-color: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* Conversation list item visuals */
+.convo-item {
+  width: 100%;
+  text-align: left;
+  color: #fff;
+  padding: 12px;
+  border-radius: 0;
+  border-top: 1px solid rgba(255,255,255,0.15);
+  background: transparent;
+  font-size: 1rem;
+}
+.convo-item.active {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.convo-chip {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg,#ff4fa3,#ff9bd2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #14171d;
+  font-weight: 800;
+}
+
+.convo-header-chip {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg,#ff4fa3,#ff9bd2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #14171d;
+  font-weight: 800;
+}
+
+.messages-body {
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
