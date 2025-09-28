@@ -34,9 +34,9 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { err
 export default function App() {
   return (
     <UserStoreProvider>
-
-      <div>
-        <NavBar />
+      <ErrorBoundary>
+        <div>
+          <NavBar />
         <div className="container">
           <Routes>
             <Route path="/" element={<HomePage />} />
