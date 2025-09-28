@@ -9,7 +9,7 @@ import FocusAreasPage from './pages/FocusAreasPage';
 import ExperienceGoalsPage from './pages/ExperienceGoalsPage';
 import BioPicturePage from './pages/BioPicturePage';
 import SettingsPage from './pages/SettingsPage';
-// import ProfileSettingsPage from './pages/ProfileSettingsPage';
+import ProfileSettingsPage from './pages/ProfileSettingsPage';
 import LoginPage from './pages/LoginPage';
 import SignUpPage from './pages/SignUpPage';
 import ConnectionsPage from './pages/ConnectionsPage';
@@ -19,10 +19,6 @@ import FriendsPage from './pages/FriendsPage';
 import AIDemoPage from './pages/AIDemoPage';
 import ChatPage from './pages/Chat';
 import PersonalInfoPage from './pages/PersonalInfoPage';
-// Notification icon asset
-// Using an explicit import so Vite bundles the image even though it's outside public/
-// (located at ../images/7838363.png relative to this file)
-import notifIcon from '../images/7838363.png';
 
 class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { error?: Error }> {
   state = { error: undefined as Error | undefined };
@@ -60,7 +56,7 @@ export default function App() {
               <Route path="/personal-info" element={<PersonalInfoPage />} />
               <Route path="/profile/:username" element={<ProfilePage />} />
               <Route path="/explore" element={<ExplorePage />} />
-              <Route path="/settings" element={<ProfileSettingsPage />} />
+              <Route path="/settings" element={<SettingsPage />} />
               <Route path="/connections" element={<ConnectionsPage />} />
               <Route path="/notifications" element={<NotificationsPage />} />
               <Route path="/friends" element={<FriendsPage />} />
@@ -86,7 +82,7 @@ function NavBar() {
     { to: '/connections', label: `CONNECTIONS${incomingCount ? ` (${incomingCount})` : ''}` },
     { to: '/friends', label: 'FRIENDS' },
     { to: '/personal-info', label: 'BASIC INFO' },
-  { to: '/settings', label: 'SETTINGS' }
+    { to: '/settings', label: 'SETTINGS' }
   ];
   const publicLinks = [
     { to: '/', label: 'HOME' },
@@ -109,72 +105,33 @@ function NavBar() {
         </NavLink>
       ))}
       <span style={{flex:1}} />
+      {user && (
+        <div style={{display:'flex', alignItems:'center', gap:'1rem'}}>
+          <NavLink to="/notifications" className={({isActive}:{isActive:boolean})=> isActive? 'active' : ''} title="Notifications">
+            🔔
+          </NavLink>
+          <NavLink to={`/profile/${user.username}`} className={({isActive}:{isActive:boolean})=> isActive? 'active' : ''} style={{
+            width: '32px',
+            height: '32px',
+            borderRadius: '50%',
+            background: 'linear-gradient(135deg, #ff4fa3, #ff9bd2)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#fff',
+            fontWeight: '700',
+            fontSize: '0.8rem',
+            textDecoration: 'none'
+          }} title={`Profile: @${user.username}`}>
+            {user.firstName?.charAt(0) || user.username?.charAt(0) || '?'}
+          </NavLink>
+          <button
+            onClick={() => { logout(); navigate('/'); }}
+            style={{background:'rgba(255,255,255,0.1)', color:'#fff', border:'1px solid rgba(255,255,255,0.2)', fontSize:'0.8rem', padding:'0.5rem 1rem'}}
+            aria-label="Log out"
+          >Logout</button>
+        </div>
+      )}
     </nav>
-  );
-}
-
-function UserCorner() {
-  const { user, logout } = useUserStore((s: any) => ({ user: s.user, logout: s.logout }));
-  const navigate = useNavigate();
-  if(!user) return null;
-  return (
-    <div style={{position:'fixed', top:8, right:12, display:'flex', alignItems:'center', gap:'0.75rem', zIndex:2000}}>
-      <NavLink
-        to="/notifications"
-        className={({isActive}:{isActive:boolean})=> isActive? 'active' : ''}
-        title="Notifications"
-        style={{
-          width:36,
-          height:36,
-          borderRadius:'50%',
-          display:'flex',
-          alignItems:'center',
-          justifyContent:'center',
-          background:'rgba(255,255,255,0.15)',
-          overflow:'hidden'
-        }}
-      >
-        <img src={notifIcon} alt="Notifications" style={{width:'70%', height:'70%', objectFit:'contain', filter:'drop-shadow(0 0 2px rgba(0,0,0,0.4))'}} />
-      </NavLink>
-      <NavLink
-        to={`/profile/${user.username}`}
-        className={({isActive}:{isActive:boolean})=> isActive? 'active' : ''}
-        title={`Profile: @${user.username}`}
-        style={{
-          width:38,
-          height:38,
-          borderRadius:'50%',
-          background: user.avatarUrl ? 'transparent' : 'linear-gradient(135deg,#ff4fa3,#ff9bd2)',
-          display:'flex',
-          alignItems:'center',
-          justifyContent:'center',
-          color:'#fff',
-          fontWeight:700,
-          fontSize: user.avatarUrl ? 0 : '0.85rem',
-          overflow:'hidden',
-          boxShadow:'0 2px 6px rgba(0,0,0,0.35)'
-        }}
-      >
-        {user.avatarUrl ? (
-          <img src={user.avatarUrl} alt="avatar" style={{width:'100%', height:'100%', objectFit:'cover'}} />
-        ) : (
-          user.firstName?.charAt(0) || user.username?.charAt(0) || '?'
-        )}
-      </NavLink>
-      <button
-        onClick={() => { logout(); navigate('/'); }}
-        className="hero-btn"
-        style={{
-          padding:'0.5rem 1rem',
-          fontSize:'.7rem',
-          background:'linear-gradient(135deg,#ff4fa3,#ff9bd2)',
-          color:'#1a1d3a',
-          border:'2px solid rgba(255,255,255,0.25)',
-          fontWeight:700,
-          letterSpacing:'.5px',
-          textTransform:'uppercase'
-        }}
-      >Logout</button>
-    </div>
   );
 }
