@@ -34,13 +34,15 @@ export default function HomePage() {
               </>
             )}
           </div>
-
-          {user && <Link to={`/profile/${user.username}`}><button>Your Profile</button></Link>}
-          <span style={{ marginLeft: 8 }} />
-          <Link to="/chat"><button>Messages</button></Link>
-          <div style={{ marginTop: 12 }}>
-            <Link to="/ai-demo">Try the AI Demo</Link>
-          </div>
+          
+          {/* Additional user actions */}
+          {user && (
+            <div style={{ marginTop: 16 }}>
+              <Link to="/chat"><button>Messages</button></Link>
+              <span style={{ marginLeft: 8 }} />
+              <Link to="/ai-demo"><button>Try AI Demo</button></Link>
+            </div>
+          )}
         </div>
       </div>
 
