@@ -42,6 +42,13 @@ export default function HomePage() {
               </>
             )}
           </div>
+        )}
+          
+        {user && <Link to={`/profile/${user.username}`}><button>Your Profile</button></Link>}
+        <span style={{ marginLeft: 8 }} />
+        <Link to="/chat"><button>Messages</button></Link>
+        <div style={{ marginTop: 12 }}>
+          <Link to="/ai-demo">Try the AI Demo</Link>
         </div>
       </div>
 
@@ -65,6 +72,16 @@ export default function HomePage() {
             and your experiences, so we built a fun community where these connections come first!
           </p>
         </div>
+        <div className="card">
+          <h3>Messages</h3>
+          <p>DM friends or chat with your groups.</p>
+          <Link to="/chat"><button>Open</button></Link>
+        </div>
+        {user ? (
+          <div className="card">
+            <h3>Messages</h3>
+            <p>DM friends or chat with your groups.</p>
+            <Link to="/chat"><button>Open</button></Link>
       </div>
 
       {/* Info Cards Grid */}
