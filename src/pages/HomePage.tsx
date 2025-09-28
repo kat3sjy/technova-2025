@@ -42,15 +42,11 @@ export default function HomePage() {
               </>
             )}
           </div>
-<<<<<<< HEAD
-        )}
-        {user && <Link to={`/profile/${user.username}`}><button>Your Profile</button></Link>}
-        <span style={{ marginLeft: 8 }} />
-        <Link to="/chat"><button>Messages</button></Link>
-        <div style={{ marginTop: 12 }}>
-          <Link to="/ai-demo">Try the AI Demo</Link>
-=======
->>>>>>> b7d5e9e (commit)
+          {user && (
+            <Link to={`/profile/${user.username}`}>
+              <button>Your Profile</button>
+            </Link>
+          )}
         </div>
       </div>
 
@@ -63,18 +59,6 @@ export default function HomePage() {
             className="community-illustration"
           />
         </div>
-<<<<<<< HEAD
-        <div className="card">
-          <h3>Messages</h3>
-          <p>DM friends or chat with your groups.</p>
-          <Link to="/chat"><button>Open</button></Link>
-        </div>
-        {user ? (
-          <div className="card">
-            <h3>Messages</h3>
-            <p>DM friends or chat with your groups.</p>
-            <Link to="/chat"><button>Open</button></Link>
-=======
         
         <div className="community-text">
           <p>
@@ -93,7 +77,6 @@ export default function HomePage() {
         <div className="info-card">
           <div className="card-icon">
             <img src="/HP_Character_Active.png" alt="HP Character" className="card-icon-img" />
->>>>>>> b7d5e9e (commit)
           </div>
           <h3>What is Ctrl+Femme?</h3>
           <p>
