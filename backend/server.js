@@ -4,9 +4,15 @@ import express from "express";
 import cors from "cors";
 import http from 'http';
 import { Server as SocketIOServer } from 'socket.io';
+import { randomUUID, scryptSync, timingSafeEqual } from 'crypto';
 import chatRouter from './chat/router.js';
 import { chatStore } from './chat/store.js';
 import compatRouter from './routes/compatibility.js';
+import User from './models/User.js';
+import profileRoutes from "./routes/profile.js";
+import legacyMatchesRoutes from "./routes/matches.js";
+import messageRoutes from "./routes/messages.js";
+import matchRoutes from './routes/matchRoutes.js';
 
 // ensure `app` is exported for tests
 export const app = express();
@@ -16,6 +22,23 @@ app.use(express.json());
 const rawOrigins = (process.env.FRONTEND_ORIGIN || '').split(',').map(s => s.trim()).filter(Boolean);
 const allowedOrigins = rawOrigins.length ? rawOrigins : ['http://localhost:5173', 'http://localhost:5174'];
 app.use(cors({ origin: allowedOrigins, credentials: true }));
+
+// Basic API request logger (helps trace 400s/500s)
+app.use((req, _res, next) => {
+  if (req.path.startsWith('/api/')) {
+    console.log(`[req] ${req.method} ${req.path} ct=${req.get('content-type') || '-'} len=${req.get('content-length') || '-'}`);
+  }
+  next();
+});
+
+// Log JSON parse errors explicitly as 400 with JSON payload
+app.use((err, _req, res, next) => {
+  if (err instanceof SyntaxError && 'body' in err) {
+    console.error('[json] parse error:', err.message);
+    return res.status(400).json({ error: 'Invalid JSON', details: err.message });
+  }
+  next(err);
+});
 
 // MongoDB connection (optional in dev)
 const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI;
@@ -31,165 +54,117 @@ if (mongoUri) {
   console.warn("No MONGODB_URI set. Skipping MongoDB connection (dev chat mode).");
 }
 
-// Routes
-import profileRoutes from "./routes/profile.js";
-import legacyMatchesRoutes from "./routes/matches.js";
-import messageRoutes from "./routes/messages.js";
-import matchRoutes from './routes/matchRoutes.js';
-
-app.use("/api/profile", profileRoutes);
-app.use("/api/matches", legacyMatchesRoutes);
-app.use("/api/messages", messageRoutes);
-app.use('/api', matchRoutes);
-
 // Mount chat HTTP routes
 app.use('/api/chat', chatRouter);
 
 // Mount compatibility router
 app.use(compatRouter);
 
-// --- AI demo endpoints ---
-app.get('/api/ai/status', (req, res) => {
-  res.json({ ok: true, service: 'ai', status: 'ready' });
-});
+// --- Auth routes must be registered BEFORE any generic '/api' routers ---
+function hashPassword(password) {
+  const salt = randomUUID();
+  const hash = scryptSync(password, salt, 64).toString('hex');
+  return `${salt}:${hash}`;
+}
 
-app.post('/api/ai/analyze', async (req, res) => {
-  const { text } = req.body || {};
-  // Stubbed response; replace with real logic as needed.
-  res.json({
-    ok: true,
-    inputLength: typeof text === 'string' ? text.length : 0,
-    result: 'analysis-complete',
-  });
-});
-// --- end AI endpoints ---
-
-// Health
-app.get("/", (_req, res) => res.send("API is running"));
-
-// Add DB health endpoint
-app.get('/health/db', async (_req, res) => {
-  const hasUri = Boolean(process.env.MONGODB_URI || process.env.MONGO_URI);
-  // 0 = disconnected, 1 = connected, 2 = connecting, 3 = disconnecting
-  const state = mongoose.connection?.readyState ?? 0;
-  let ping = 0;
-  let dbName = null;
-
+function verifyPassword(password, stored) {
+  const [salt, storedHex] = (stored || '').split(':');
+  if (!salt || !storedHex) return false;
+  const computed = scryptSync(password, salt, 64).toString('hex');
   try {
-    if (hasUri && state === 1 && mongoose.connection.db) {
-      dbName = mongoose.connection.db.databaseName ?? null;
-      const admin = mongoose.connection.db.admin();
-      const pong = await admin.ping().catch(() => ({ ok: 0 }));
-      ping = pong?.ok === 1 ? 1 : 0;
-    }
+    return timingSafeEqual(Buffer.from(storedHex, 'hex'), Buffer.from(computed, 'hex'));
   } catch {
-    ping = 0;
+    return false;
+  }
+}
+
+function sanitizeUser(u) {
+  if (!u) return null;
+  if (typeof u.toSafeJSON === 'function') return u.toSafeJSON();
+  return { id: u._id, username: u.username, email: u.email, createdAt: u.createdAt, updatedAt: u.updatedAt };
+}
+
+app.post('/api/auth/signup', async (req, res) => {
+  console.debug('[auth.signup.v2] incoming body:', req.body);
+  const { username, password, email } = req.body || {};
+  const missing = ['username', 'password'].filter(k => !req.body || !req.body[k]);
+  if (missing.length) {
+    console.warn('[auth.signup.v2] missing fields:', missing, 'content-type:', req.get('content-type'));
+    return res.status(400).json({ error: 'username and password are required', missing });
   }
 
-  res.status(200).json({
-    ok: hasUri ? (state === 1 && ping === 1) : false,
-    driver: hasUri ? 'mongoose' : 'none',
-    state: hasUri ? state : 0,
-    db: hasUri ? dbName : null,
-    ping: hasUri ? ping : 0,
-  });
+  try {
+    const usernameLower = String(username).trim().toLowerCase();
+    const emailLower = email ? String(email).trim().toLowerCase() : undefined;
+
+    // Check for existing username/email
+    const orConds = [{ usernameLower }];
+    if (emailLower) orConds.push({ emailLower });
+    const existing = await User.findOne({ $or: orConds });
+    if (existing) {
+      const taken = existing.usernameLower === usernameLower ? 'username' : 'email';
+      return res.status(409).json({ error: `${taken} already taken` });
+    }
+
+    const passwordHash = hashPassword(password);
+    const user = new User({
+      username: String(username).trim(),
+      usernameLower,
+      passwordHash,
+      email: email ? String(email).trim() : undefined,
+      emailLower,
+    });
+    await user.save();
+    return res.status(201).json({ user: sanitizeUser(user) });
+  } catch (err) {
+    if (err && err.code === 11000) {
+      return res.status(409).json({ error: 'username or email already taken' });
+    }
+    console.error('[auth.signup.v2] error:', err);
+    return res.status(500).json({ error: 'internal error' });
+  }
 });
 
-// Dev portal showing both UIs on one port (3000)
-app.get('/dev', (_req, res) => {
-  const rootUrl = 'http://localhost:5174';   // root UI
-  const chatUrl = 'http://localhost:5173';   // frontend/chat UI
-  res.setHeader('Content-Type', 'text/html; charset=utf-8');
-  res.send(`<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8" />
-  <title>Technova Dev Portal</title>
-  <style>
-    body { margin: 0; font-family: system-ui, sans-serif; background: #0b0f16; color: #e5e7eb; }
-    header { padding: 12px 16px; border-bottom: 1px solid #1f2937; display:flex; gap:16px; align-items:center; }
-    a { color: #93c5fd; }
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; height: calc(100vh - 52px); }
-    .pane { display:flex; flex-direction:column; }
-    .pane header { border-bottom: 1px solid #1f2937; }
-    iframe { flex: 1; border: 0; background: #111827; }
-  </style>
-</head>
-<body>
-  <header>
-    <strong>Technova Dev Portal</strong>
-    <span>API: <code>http://localhost:3000</code></span>
-    <span>Root UI: <a href="${rootUrl}" target="_blank" rel="noreferrer">${rootUrl}</a></span>
-    <span>Chat UI: <a href="${chatUrl}" target="_blank" rel="noreferrer">${chatUrl}</a></span>
-  </header>
-  <div class="grid">
-    <div class="pane">
-      <header style="padding:8px 12px;">Root UI (5174)</header>
-      <iframe src="${rootUrl}"></iframe>
-    </div>
-    <div class="pane">
-      <header style="padding:8px 12px;">Chat UI (5173)</header>
-      <iframe src="${chatUrl}"></iframe>
-    </div>
-  </div>
-</body>
-</html>`);
+// Add login
+app.post('/api/auth/login', async (req, res) => {
+  console.debug('[auth.login.v2] incoming keys:', req.body ? Object.keys(req.body) : null);
+  const { username, password } = req.body || {};
+  if (!username || !password) {
+    return res.status(400).json({ error: 'username and password are required' });
+  }
+  try {
+    const usernameLower = String(username).trim().toLowerCase();
+    const user = await User.findOne({ usernameLower });
+    if (!user) return res.status(401).json({ error: 'invalid credentials' });
+    const ok = verifyPassword(password, user.passwordHash);
+    if (!ok) return res.status(401).json({ error: 'invalid credentials' });
+    return res.json({ user: sanitizeUser(user) });
+  } catch (err) {
+    console.error('[auth.login.v2] error:', err);
+    return res.status(500).json({ error: 'internal error' });
+  }
 });
 
-// Start server
-const PORT = process.env.PORT || 3000;
-const HOST = process.env.HOST || '0.0.0.0';
+// Mount remaining routes AFTER auth so they don't shadow it
+app.use("/api/profile", profileRoutes);
+app.use("/api/matches", legacyMatchesRoutes);
+app.use("/api/messages", messageRoutes);
+app.use('/api', matchRoutes);
 
-// Replace app.listen with an HTTP server + Socket.IO
+// Start HTTP server + Socket.IO
+const port = Number(process.env.PORT) || 3000;
 const server = http.createServer(app);
 const io = new SocketIOServer(server, {
-  cors: {
-    origin: allowedOrigins,
-    credentials: true,
-  },
+  cors: { origin: allowedOrigins, credentials: true },
 });
 
-// Socket.IO events
 io.on('connection', (socket) => {
-  // Join a conversation room
-  socket.on('conversation:join', ({ conversationId, userId }) => {
-    if (!conversationId) return;
-    try {
-      if (userId) {
-        // add the socket's user to the conversation so it appears in their list
-        chatStore.addParticipant(conversationId, userId);
-      }
-    } catch {}
-    socket.join(`c:${conversationId}`);
-  });
-
-  // Send a message
-  socket.on('message:send', (payload, cb) => {
-    try {
-      const { conversationId, senderId, text } = payload || {};
-      const msg = chatStore.addMessage({ conversationId, senderId, text });
-      io.to(`c:${conversationId}`).emit('message:new', msg);
-      cb && cb({ ok: true, message: msg });
-    } catch {
-      cb && cb({ ok: false, error: 'Conversation not found' });
-    }
-  });
-
-  // Typing indicator
-  socket.on('typing', ({ conversationId, userId, isTyping }) => {
-    if (!conversationId || !userId) return;
-    socket.to(`c:${conversationId}`).emit('typing', { conversationId, userId, isTyping: !!isTyping });
-  });
+  console.log('[io] client connected', socket.id);
+  socket.on('disconnect', () => console.log('[io] client disconnected', socket.id));
 });
 
-server.on('error', (err) => {
-  console.error('HTTP server error:', err?.message || err);
+server.listen(port, () => {
+  console.log(`Server listening on http://localhost:${port}`);
+  console.log(`CORS allowed origins: ${allowedOrigins.join(', ')}`);
+  console.log(`FRONTEND_ORIGIN env: ${process.env.FRONTEND_ORIGIN || '-'}`);
 });
-
-if (process.env.NODE_ENV !== 'test') {
-  server.listen(PORT, HOST, () => {
-    const urlHost = HOST === '0.0.0.0' ? 'localhost' : HOST;
-    console.log(`Server with Socket.IO listening on http://${urlHost}:${PORT} (bind: ${HOST})`);
-    console.log(`CORS allowed origins: ${allowedOrigins.join(', ')}`);
-  });
-}

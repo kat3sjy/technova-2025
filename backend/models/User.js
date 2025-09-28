@@ -1,10 +1,46 @@
 import mongoose from 'mongoose';
 
-// ...existing code...
 const UserSchema = new mongoose.Schema(
-  {},
-  { strict: false, collection: 'users', timestamps: false }
+  {
+    username: { type: String, required: true, trim: true },
+    usernameLower: { type: String, required: true }, // removed inline index
+    passwordHash: { type: String, required: true },
+    email: { type: String, trim: true },
+    emailLower: { type: String }, // removed inline index
+  },
+  { timestamps: true, collection: 'users' }
 );
+
+// Unique indexes
+UserSchema.index({ usernameLower: 1 }, { unique: true });
+UserSchema.index(
+  { emailLower: 1 },
+  { unique: true, partialFilterExpression: { emailLower: { $exists: true, $type: 'string' } } }
+);
+
+// Ensure lowercase fields are set
+UserSchema.pre('save', function (next) {
+  if (this.isModified('username') || this.isNew) {
+    this.username = (this.username || '').trim();
+    this.usernameLower = this.username.toLowerCase();
+  }
+  if (this.isModified('email')) {
+    this.email = this.email ? this.email.trim() : undefined;
+    this.emailLower = this.email ? this.email.toLowerCase() : undefined;
+  }
+  next();
+});
+
+// Optional: helper to hide sensitive fields when converting to JSON
+UserSchema.methods.toSafeJSON = function () {
+  return {
+    id: this._id,
+    username: this.username,
+    email: this.email || undefined,
+    createdAt: this.createdAt,
+    updatedAt: this.updatedAt,
+  };
+};
 
 const User = mongoose.models.User || mongoose.model('User', UserSchema);
 

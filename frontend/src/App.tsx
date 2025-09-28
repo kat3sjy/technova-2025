@@ -9,6 +9,7 @@ import { UserStoreProvider } from './store/userStore';
 import NotificationsPage from './pages/NotificationsPage';
 import FriendsPage from './pages/FriendsPage';
 import ChatPage from './pages/Chat';
+import SignupPage from './pages/SignupPage';
 
 export default function App() {
   return (
@@ -27,6 +28,7 @@ export default function App() {
               <Route path="/friends" element={<FriendsPage />} />
               <Route path="/chat" element={<ChatPage />} />
               <Route path="/gamemap" element={<GameMapPage />} />
+              <Route path="/signup" element={<SignupPage />} />
             </Routes>
           </div>
           <footer>© {new Date().getFullYear()} Technova Networking • Empowering connection across gaming, tech, and sports</footer>

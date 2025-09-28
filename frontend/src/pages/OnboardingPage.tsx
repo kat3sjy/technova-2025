@@ -5,6 +5,8 @@ import { generateUsername } from '../utils/generateUsername';
 import { validatePassword } from '../utils/password';
 import { LOCATION_OPTIONS } from '../utils/locations';
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+
 interface FormState {
   firstName: string;
   lastName: string;
@@ -91,9 +93,10 @@ export default function OnboardingPage() {
     if (combined.length) return;
 
     try {
-      const res = await fetch('/api/auth/signup', {
+      const signupRes = await fetch(`${API_BASE}/api/auth/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           username: safeUsername,
           password: form.password,
@@ -106,27 +109,48 @@ export default function OnboardingPage() {
           experienceLevel: form.experienceLevel
         })
       });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err?.error || 'Failed to create profile');
+      if (!signupRes.ok && signupRes.status !== 409) {
+        const j = await signupRes.json().catch(() => ({}));
+        throw new Error(j?.error || 'Failed to create profile');
       }
-      const saved = await res.json();
-      setUser({
-        id: saved._id,
-        username: saved.username,
-        firstName: saved.firstName || form.firstName,
-        lastName: saved.lastName || form.lastName,
-        areas: saved.tags || form.areas,
-        goals: saved.goals || form.goals,
-        experienceLevel: saved.experienceLevel || form.experienceLevel,
-        bio: saved.bio || form.bio,
-        location: saved.location || form.location,
-        createdAt: saved.createdAt || new Date().toISOString()
-      });
     } catch (e: any) {
-      alert(e?.message || 'Failed to save profile');
+      // If 409 username taken, proceed to profile step
+    }
+
+    const combinedLocation = form.country && form.city ? `${form.city}, ${form.country}` : form.country || form.city || '';
+    const profileRes = await fetch(`${API_BASE}/api/profile`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        username: safeUsername,
+        firstName: form.firstName,
+        lastName: form.lastName,
+        tags: form.areas,
+        experienceLevel: form.experienceLevel,
+        goals: form.goals,
+        bio: form.bio,
+        location: combinedLocation
+      })
+    });
+    if (!profileRes.ok) {
+      const j = await profileRes.json().catch(() => ({}));
+      setUsernameError(j?.error || 'Unable to save profile');
       return;
     }
+    const userDoc = await profileRes.json();
+    setUser({
+      id: userDoc._id,
+      username: userDoc.username,
+      firstName: userDoc.firstName || form.firstName,
+      lastName: userDoc.lastName || form.lastName,
+      areas: userDoc.tags || form.areas,
+      goals: userDoc.goals || form.goals,
+      experienceLevel: userDoc.experienceLevel || form.experienceLevel,
+      bio: userDoc.bio || form.bio,
+      location: userDoc.location || form.location,
+      createdAt: userDoc.createdAt || new Date().toISOString()
+    });
   }
 
   const steps = [
