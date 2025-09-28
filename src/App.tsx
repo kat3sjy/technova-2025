@@ -14,6 +14,7 @@ import NotificationsPage from './pages/NotificationsPage';
 import FriendsPage from './pages/FriendsPage';
 import AIDemoPage from './pages/AIDemoPage';
 import ChatPage from './pages/Chat';
+import PersonalInfoPage from './pages/PersonalInfoPage';
 
 class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { error?: Error }> {
   state = { error: undefined as Error | undefined };
@@ -71,6 +72,7 @@ function NavBar() {
     { to: '/', label: 'HOME' },
     { to: '/connections', label: `CONNECTIONS${incomingCount ? ` (${incomingCount})` : ''}` },
     { to: '/friends', label: 'FRIENDS' },
+    { to: '/personal-info', label: 'BASIC INFO' },
     { to: '/settings', label: 'SETTINGS' }
   ];
   const publicLinks = [
