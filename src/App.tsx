@@ -9,7 +9,7 @@ import FocusAreasPage from './pages/FocusAreasPage';
 import ExperienceGoalsPage from './pages/ExperienceGoalsPage';
 import BioPicturePage from './pages/BioPicturePage';
 import SettingsPage from './pages/SettingsPage';
-import ProfileSettingsPage from './pages/ProfileSettingsPage';
+// import ProfileSettingsPage from './pages/ProfileSettingsPage';
 import LoginPage from './pages/LoginPage';
 import SignUpPage from './pages/SignUpPage';
 import ConnectionsPage from './pages/ConnectionsPage';
@@ -86,7 +86,7 @@ function NavBar() {
     { to: '/connections', label: `CONNECTIONS${incomingCount ? ` (${incomingCount})` : ''}` },
     { to: '/friends', label: 'FRIENDS' },
     { to: '/personal-info', label: 'BASIC INFO' },
-    { to: '/settings', label: 'SETTINGS' }
+  { to: '/settings', label: 'SETTINGS' }
   ];
   const publicLinks = [
     { to: '/', label: 'HOME' },
@@ -96,99 +96,85 @@ function NavBar() {
   ];
   const links = user ? authedLinks : publicLinks;
   return (
-    <nav
-      aria-label="Main navigation"
-      style={{
-        position:'sticky',
-        top:0,
-        zIndex:3000,
-        display:'flex',
-        alignItems:'center',
-        gap:'.75rem',
-        flexWrap:'nowrap',
-        padding:'0.6rem 1.2rem',
-        background:'rgba(26,29,58,0.85)',
-        backdropFilter:'blur(10px)',
-        borderBottom:'1px solid rgba(255,255,255,0.1)'
-      }}
-    >
-      <strong style={{marginRight:'1.5rem', fontSize:'1.15rem', fontWeight:700, color:'#ffffff'}}>Ctrl+Femme</strong>
+    <nav aria-label="Main navigation" style={{display:'flex', alignItems:'center', gap:'.75rem', flexWrap:'wrap'}}>
+      <strong style={{marginRight:'2rem', fontSize:'1.2rem', fontWeight:'700', color:'#ffffff'}}>Ctrl+Femme</strong>
       {links.map(l => (
         <NavLink
           key={l.to}
           to={l.to}
           className={({ isActive }: { isActive: boolean }) => isActive ? 'active' : ''}
-          style={{ position:'relative', padding:'0.25rem 0.4rem' }}
+          style={{ position:'relative' }}
         >
           {l.label}
         </NavLink>
       ))}
       <span style={{flex:1}} />
-      {user && (
-        <>
-          {/* Notifications */}
-          <NavLink
-            to="/notifications"
-            className={({isActive}:{isActive:boolean})=> isActive? 'active' : ''}
-            title="Notifications"
-            style={{
-              width:36,
-              height:36,
-              borderRadius:'50%',
-              display:'flex',
-              alignItems:'center',
-              justifyContent:'center',
-              background:'rgba(255,255,255,0.15)',
-              overflow:'hidden',
-              marginRight:4
-            }}
-          >
-            <img src={notifIcon} alt="Notifications" style={{width:'70%', height:'70%', objectFit:'contain', filter:'drop-shadow(0 0 2px rgba(0,0,0,0.4))'}} />
-          </NavLink>
-          {/* Profile Avatar */}
-            <NavLink
-              to={`/profile/${user.username}`}
-              className={({isActive}:{isActive:boolean})=> isActive? 'active' : ''}
-              title={`Profile: @${user.username}`}
-              style={{
-                width:38,
-                height:38,
-                borderRadius:'50%',
-                background: user.avatarUrl ? 'transparent' : 'linear-gradient(135deg,#ff4fa3,#ff9bd2)',
-                display:'flex',
-                alignItems:'center',
-                justifyContent:'center',
-                color:'#fff',
-                fontWeight:700,
-                fontSize: user.avatarUrl ? 0 : '0.85rem',
-                overflow:'hidden',
-                boxShadow:'0 2px 6px rgba(0,0,0,0.35)',
-                marginRight:8
-              }}
-            >
-              {user.avatarUrl ? (
-                <img src={user.avatarUrl} alt="avatar" style={{width:'100%', height:'100%', objectFit:'cover'}} />
-              ) : (
-                user.firstName?.charAt(0) || user.username?.charAt(0) || '?'
-              )}
-            </NavLink>
-            {/* Logout */}
-            <button
-              onClick={() => { logout(); navigate('/'); }}
-              className="hero-btn"
-              style={{
-                padding:'0.55rem 0.9rem',
-                fontSize:'.65rem',
-                background:'linear-gradient(135deg,#ff4fa3,#ff9bd2)',
-                color:'#1a1d3a',
-                border:'2px solid rgba(255,255,255,0.25)',
-                fontWeight:700,
-                letterSpacing:'.5px',
-                textTransform:'uppercase'
-              }}
-            >Logout</button>
-        </>
-      )}
     </nav>
+  );
+}
+
+function UserCorner() {
+  const { user, logout } = useUserStore((s: any) => ({ user: s.user, logout: s.logout }));
+  const navigate = useNavigate();
+  if(!user) return null;
+  return (
+    <div style={{position:'fixed', top:8, right:12, display:'flex', alignItems:'center', gap:'0.75rem', zIndex:2000}}>
+      <NavLink
+        to="/notifications"
+        className={({isActive}:{isActive:boolean})=> isActive? 'active' : ''}
+        title="Notifications"
+        style={{
+          width:36,
+          height:36,
+          borderRadius:'50%',
+          display:'flex',
+          alignItems:'center',
+          justifyContent:'center',
+          background:'rgba(255,255,255,0.15)',
+          overflow:'hidden'
+        }}
+      >
+        <img src={notifIcon} alt="Notifications" style={{width:'70%', height:'70%', objectFit:'contain', filter:'drop-shadow(0 0 2px rgba(0,0,0,0.4))'}} />
+      </NavLink>
+      <NavLink
+        to={`/profile/${user.username}`}
+        className={({isActive}:{isActive:boolean})=> isActive? 'active' : ''}
+        title={`Profile: @${user.username}`}
+        style={{
+          width:38,
+          height:38,
+          borderRadius:'50%',
+          background: user.avatarUrl ? 'transparent' : 'linear-gradient(135deg,#ff4fa3,#ff9bd2)',
+          display:'flex',
+          alignItems:'center',
+          justifyContent:'center',
+          color:'#fff',
+          fontWeight:700,
+          fontSize: user.avatarUrl ? 0 : '0.85rem',
+          overflow:'hidden',
+          boxShadow:'0 2px 6px rgba(0,0,0,0.35)'
+        }}
+      >
+        {user.avatarUrl ? (
+          <img src={user.avatarUrl} alt="avatar" style={{width:'100%', height:'100%', objectFit:'cover'}} />
+        ) : (
+          user.firstName?.charAt(0) || user.username?.charAt(0) || '?'
+        )}
+      </NavLink>
+      <button
+        onClick={() => { logout(); navigate('/'); }}
+        className="hero-btn"
+        style={{
+          padding:'0.5rem 1rem',
+          fontSize:'.7rem',
+          background:'linear-gradient(135deg,#ff4fa3,#ff9bd2)',
+          color:'#1a1d3a',
+          border:'2px solid rgba(255,255,255,0.25)',
+          fontWeight:700,
+          letterSpacing:'.5px',
+          textTransform:'uppercase'
+        }}
+      >Logout</button>
+    </div>
   );
 }
