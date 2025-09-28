@@ -42,6 +42,15 @@ export default function HomePage() {
               </>
             )}
           </div>
+<<<<<<< HEAD
+        )}
+        {user && <Link to={`/profile/${user.username}`}><button>Your Profile</button></Link>}
+        <span style={{ marginLeft: 8 }} />
+        <Link to="/chat"><button>Messages</button></Link>
+        <div style={{ marginTop: 12 }}>
+          <Link to="/ai-demo">Try the AI Demo</Link>
+=======
+>>>>>>> b7d5e9e (commit)
         </div>
       </div>
 
@@ -54,6 +63,19 @@ export default function HomePage() {
             className="community-illustration"
           />
         </div>
+<<<<<<< HEAD
+        <div className="card">
+          <h3>Messages</h3>
+          <p>DM friends or chat with your groups.</p>
+          <Link to="/chat"><button>Open</button></Link>
+        </div>
+        {user ? (
+          <div className="card">
+            <h3>Messages</h3>
+            <p>DM friends or chat with your groups.</p>
+            <Link to="/chat"><button>Open</button></Link>
+=======
+        
         <div className="community-text">
           <p>
             Ctrl+Femme's goals are simple: to create a safe, supportive, and fun space where 
@@ -63,17 +85,15 @@ export default function HomePage() {
             We know it isn't always easy to find others who share both your interests 
             and your experiences, so we built a fun community where these connections come first!
           </p>
-          <div style={{display:'flex', gap:'.75rem', flexWrap:'wrap', marginTop:'1rem'}}>
-            <Link to="/chat" className="hero-btn secondary">messages</Link>
-            <Link to="/ai-demo" className="hero-btn" style={{background:'rgba(255,255,255,0.08)'}}>AI demo</Link>
-          </div>
         </div>
       </div>
+
       {/* Info Cards Grid */}
       <div className="info-grid">
         <div className="info-card">
           <div className="card-icon">
             <img src="/HP_Character_Active.png" alt="HP Character" className="card-icon-img" />
+>>>>>>> b7d5e9e (commit)
           </div>
           <h3>What is Ctrl+Femme?</h3>
           <p>

@@ -1,17 +1,13 @@
 import React, { useState, useMemo } from 'react';
-import { Navigate } from 'react-router-dom';
 import { useUserStore } from '../store/userStore';
 import { handleImageUpload, validateImageFile } from '../utils/imageUpload';
 import { getCountries, getCities } from '../utils/locationData';
-import './home-style.css';
 
 export default function SettingsPage() {
   const { user, setUser, logout } = useUserStore() as any;
   const [imageError, setImageError] = useState('');
-  const [saving, setSaving] = useState(false);
-  const [savedAt, setSavedAt] = useState<string | null>(null);
-
-  if (!user) return <Navigate to="/login" replace />;
+  
+  if (!user) return <div className="card"><p>Login / onboard first.</p></div>;
 
   function update(field: string, value: string) {
     setUser({...user, [field]: value});
@@ -59,141 +55,71 @@ export default function SettingsPage() {
     }
   }
 
-  function handleSave(e: React.FormEvent) {
-    e.preventDefault();
-    setSaving(true);
-    // For now saving just sets timestamp (all updates are realtime already)
-    setTimeout(() => {
-      setSaving(false);
-      setSavedAt(new Date().toLocaleTimeString());
-    }, 400);
-  }
-
   return (
-    <div className="home-page">
-      <div className="hero-section" style={{paddingTop:'2rem'}}>
-        <div className="hero-content" style={{maxWidth:780}}>
-          <h1 className="hero-title">Account Settings</h1>
-          <p className="hero-description" style={{marginBottom:'1.75rem'}}>
-            Update your profile details so others can discover and connect with you.
-          </p>
-
-          <form onSubmit={handleSave} className="auth-form" style={{marginTop:0}}>
-            {/* Profile Picture */}
-            <div className="form-group">
-              <label className="form-label">Profile Picture</label>
-              <div style={{display:'flex', flexDirection:'column', gap:'.75rem'}}>
-                {user.avatarUrl && (
-                  <div style={{display:'flex', alignItems:'center', gap:'.75rem'}}>
-                    <img
-                      src={user.avatarUrl}
-                      alt="Current profile"
-                      style={{width:'80px', height:'80px', borderRadius:'50%', objectFit:'cover', boxShadow:'0 0 0 2px rgba(255,255,255,0.15)'}}
-                    />
-                    <button
-                      type="button"
-                      className="hero-btn"
-                      style={{fontSize:'.7rem', padding:'.4rem .75rem'}}
-                      onClick={() => setUser({...user, avatarUrl: undefined})}
-                    >Remove</button>
-                  </div>
-                )}
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  className="form-input"
-                  style={{padding:'.55rem'}}
+    <div className="grid" style={{gap:'1rem', maxWidth:600}}>
+      <h2>Settings</h2>
+      <div className="card">
+        <div className="form-row">
+          <label>Profile Picture</label>
+          <div style={{display:'flex', flexDirection:'column', gap:'.75rem'}}>
+            {user.avatarUrl && (
+              <div style={{display:'flex', alignItems:'center', gap:'.75rem'}}>
+                <img 
+                  src={user.avatarUrl} 
+                  alt="Current profile" 
+                  style={{width:'80px', height:'80px', borderRadius:'50%', objectFit:'cover'}}
                 />
-                {imageError && (
-                  <div className="error-message" style={{marginTop:0}}>{imageError}</div>
-                )}
-                <p style={{fontSize:'.65rem', opacity:0.65, margin:0}}>Accepted: JPG, PNG, GIF • Max 5MB</p>
-              </div>
-            </div>
-
-            {/* Name */}
-            <div className="form-group" style={{display:'flex', gap:'.75rem'}}>
-              <div style={{flex:1}}>
-                <label className="form-label">First Name</label>
-                <input
-                  type="text"
-                  className="form-input"
-                  value={user.firstName}
-                  onChange={e => update('firstName', e.target.value)}
-                  placeholder="First name"
-                />
-              </div>
-              <div style={{flex:1}}>
-                <label className="form-label">Last Name</label>
-                <input
-                  type="text"
-                  className="form-input"
-                  value={user.lastName}
-                  onChange={e => update('lastName', e.target.value)}
-                  placeholder="Last name"
-                />
-              </div>
-            </div>
-
-            {/* Country & Region */}
-            <div className="form-group" style={{display:'flex', gap:'.75rem'}}>
-              <div style={{flex:1}}>
-                <label className="form-label">Country</label>
-                <select
-                  className="form-input"
-                  value={country}
-                  onChange={e => handleCountryChange(e.target.value)}
+                <button 
+                  type="button" 
+                  onClick={() => setUser({...user, avatarUrl: undefined})}
+                  style={{fontSize:'.7rem', padding:'.25rem .5rem'}}
                 >
-                  <option value="">Select country...</option>
-                  {getCountries().map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
+                  Remove Picture
+                </button>
               </div>
-              <div style={{flex:1}}>
-                <label className="form-label">State / Region</label>
-                <select
-                  className="form-input"
-                  value={city}
-                  disabled={!country}
-                  onChange={e => handleCityChange(e.target.value)}
-                >
-                  <option value="">{country ? 'Select region...' : 'Select country first'}</option>
-                  {getCities(country).map(ct => <option key={ct} value={ct}>{ct}</option>)}
-                </select>
-              </div>
-            </div>
-
-            {/* Bio */}
-            <div className="form-group">
-              <label className="form-label">Bio</label>
-              <textarea
-                className="form-input"
-                rows={4}
-                value={user.bio}
-                onChange={e => update('bio', e.target.value)}
-                placeholder="Share a bit about your journey..."
-                style={{resize:'vertical'}}
-              />
-            </div>
-
-            <div className="form-actions" style={{marginTop:'1.75rem'}}>
-              <button
-                type="button"
-                className="hero-btn"
-                style={{background:'rgba(255,255,255,0.08)'}}
-                onClick={logout}
-              >Logout</button>
-              <button
-                type="submit"
-                className="hero-btn primary"
-                disabled={saving}
-                style={{minWidth:'140px'}}
-              >{saving ? 'Saving...' : 'Save Changes'}</button>
-            </div>
-            {savedAt && (
-              <p style={{fontSize:'.65rem', opacity:.65, marginTop:'0.75rem'}}>Saved at {savedAt}</p>
             )}
-          </form>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageChange}
+              style={{padding:'.5rem'}}
+            />
+            {imageError && (
+              <p style={{color:'#ff9bd2', fontSize:'.7rem', margin:0}}>{imageError}</p>
+            )}
+            <p style={{fontSize:'.65rem', opacity:0.7, margin:0}}>
+              Accepted formats: JPG, PNG, GIF. Max size: 5MB
+            </p>
+          </div>
+        </div>
+        <div className="form-row">
+          <label>First Name</label>
+          <input value={user.firstName} onChange={e=>update('firstName', e.target.value)} />
+        </div>
+        <div className="form-row">
+          <label>Last Name</label>
+          <input value={user.lastName} onChange={e=>update('lastName', e.target.value)} />
+        </div>
+        <div className="form-row">
+          <label>Country</label>
+          <select value={country} onChange={e => handleCountryChange(e.target.value)}>
+            <option value="">Select country...</option>
+            {getCountries().map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+        </div>
+        <div className="form-row">
+            <label>State / Province / Region</label>
+            <select value={city} disabled={!country} onChange={e => handleCityChange(e.target.value)}>
+              <option value="">{country ? 'Select region...' : 'Select country first'}</option>
+              {getCities(country).map(ct => <option key={ct} value={ct}>{ct}</option>)}
+            </select>
+        </div>
+        <div className="form-row">
+          <label>Bio</label>
+          <textarea rows={4} value={user.bio} onChange={e=>update('bio', e.target.value)} />
+        </div>
+        <div style={{display:'flex', justifyContent:'flex-end', marginTop:'1rem'}}>
+          <button type="button" style={{background:'#222a35', color:'#fff'}} onClick={logout}>Logout</button>
         </div>
       </div>
     </div>
