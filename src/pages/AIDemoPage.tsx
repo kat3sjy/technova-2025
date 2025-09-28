@@ -4,6 +4,8 @@ type UserPreview = {
   _id: string;
   username: string;
   goals: string[];
+  location?: string;
+  experienceLevel?: string;
 };
 
 export default function AIDemoPage() {
@@ -61,33 +63,41 @@ export default function AIDemoPage() {
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginTop: 16 }}>
-        {users.map((u) => (
-          <div key={u._id} style={{ border: '1px solid #ddd', borderRadius: 8, padding: 12 }}>
-            <h3 style={{ marginTop: 0 }}>{u.username || '(unknown user)'}</h3>
-            <ul style={{ margin: 0, paddingLeft: 18 }}>
-              {(u.goals || []).map((t, i) => (
-                <li key={i}>{t}</li>
-              ))}
-            </ul>
-          </div>
-        ))}
-      </div>
+      {/* Chat-style blocks */}
+      <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {users.map((u, idx) => {
+          const label = idx === 0 ? 'User A' : idx === 1 ? 'User B' : `User ${idx + 1}`;
+          return (
+            <div key={u._id} style={{ border: '1px solid #ddd', borderRadius: 8, padding: 12, background: '#eef7ff' }}>
+              <div style={{ fontWeight: 600 }}>
+                {label} — {u.username || '(unknown user)'}{' '}
+                <span style={{ color: '#555', fontWeight: 400 }}>({u._id})</span>
+              </div>
+              <div style={{ fontSize: 14, marginTop: 6, color: '#333' }}>
+                {u.location ? <div>Location: {u.location}</div> : null}
+                {u.experienceLevel ? <div>Experience: {u.experienceLevel}</div> : null}
+                {(u.goals || []).length ? (
+                  <div>
+                    Goals:
+                    <ul style={{ margin: 0, paddingLeft: 18 }}>
+                      {u.goals.map((t, i) => (
+                        <li key={i}>{t}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          );
+        })}
 
-      {result && (
-        <pre
-          style={{
-            whiteSpace: 'pre-wrap',
-            marginTop: 16,
-            padding: 12,
-            background: '#f7f7f7',
-            borderRadius: 8,
-            color: '#000', // ensure analysis text is black
-          }}
-        >
-          {result}
-        </pre>
-      )}
+        {result ? (
+          <div style={{ border: '1px solid #ddd', borderRadius: 8, padding: 12, background: '#f7f7f7' }}>
+            <div style={{ fontWeight: 600, marginBottom: 6 }}>AI Analysis</div>
+            <pre style={{ whiteSpace: 'pre-wrap', margin: 0, color: '#000' }}>{result}</pre>
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }

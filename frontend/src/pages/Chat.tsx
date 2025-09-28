@@ -53,6 +53,39 @@ export default function ChatPage() {
 
   const msgs = activeId ? messages[activeId] || [] : [];
 
+  // New: find active conversation and build a participants map (id -> name), if available
+  const activeConvo = conversations.find((c: any) => c.id === activeId);
+  const participantsMap: Record<string, string> = (() => {
+    const map: Record<string, string> = {};
+    const arr = (activeConvo?.participants || activeConvo?.members || []) as any[];
+    if (Array.isArray(arr)) {
+      arr.forEach((p: any) => {
+        const id = p?.id || p?._id || p;
+        const name = p?.name || p?.username || '';
+        if (id) map[String(id)] = String(name || '');
+      });
+    }
+    return map;
+  })();
+
+  const displayName = (id: string) => {
+    if (!id) return '(unknown)';
+    const name = participantsMap[id];
+    if (id === userId) return name ? `You — ${name} (${id})` : `You (${id})`;
+    return name ? `${name} (${id})` : id;
+  };
+
+  // New: group consecutive messages by sender
+  const groups = [];
+  for (const m of msgs) {
+    const last = groups[groups.length - 1];
+    if (!last || last.senderId !== m.senderId) {
+      groups.push({ senderId: m.senderId, items: [m] });
+    } else {
+      last.items.push(m);
+    }
+  }
+
   return (
     <div style={{ display: 'flex', height: '100%', gap: 12, padding: 12 }}>
       <aside style={{ width: 280, borderRight: '1px solid #333' }}>
@@ -89,15 +122,44 @@ export default function ChatPage() {
       <main style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         <div style={{ flex: 1, overflowY: 'auto', padding: 8, borderBottom: '1px solid #333' }}>
           {!activeId && <div>Select a conversation</div>}
-          {msgs.map((m) => (
-            <div key={m.id} style={{ margin: '6px 0', display: 'flex', justifyContent: m.senderId === userId ? 'flex-end' : 'flex-start' }}>
-              <div style={{ background: '#1f2937', padding: '6px 10px', borderRadius: 8, maxWidth: '70%' }}>
-                <div style={{ fontSize: 12, opacity: 0.7 }}>{m.senderId === userId ? 'You' : m.senderId}</div>
-                <div>{m.text}</div>
-                <div style={{ fontSize: 10, opacity: 0.5 }}>{new Date(m.createdAt).toLocaleTimeString()}</div>
+          {/* New: render grouped blocks */}
+          {groups.map((g: any) => {
+            const mine = g.senderId === userId;
+            return (
+              <div
+                key={`${g.senderId}-${g.items[0]?.id}`}
+                style={{
+                  margin: '10px 0',
+                  display: 'flex',
+                  justifyContent: mine ? 'flex-end' : 'flex-start',
+                }}
+              >
+                <div
+                  style={{
+                    maxWidth: '70%',
+                    background: mine ? '#1f2937' : '#0f172a',
+                    border: '1px solid #333',
+                    borderRadius: 10,
+                    padding: 10,
+                  }}
+                >
+                  <div style={{ fontSize: 12, opacity: 0.8, marginBottom: 6 }}>
+                    {displayName(g.senderId)}
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {g.items.map((m: any) => (
+                      <div key={m.id}>
+                        <div>{m.text}</div>
+                        <div style={{ fontSize: 10, opacity: 0.6, marginTop: 2 }}>
+                          {new Date(m.createdAt).toLocaleTimeString()}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         <form
