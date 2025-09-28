@@ -51,6 +51,7 @@ export default function App() {
             <Route path="/notifications" element={<NotificationsPage />} />
             <Route path="/friends" element={<FriendsPage />} />
             <Route path="/ai-demo" element={<AIDemoPage />} />
+            <Route path="/chat" element={<ChatPage />} />
             </Routes>
           </div>
           <footer>© {new Date().getFullYear()} Ctrl+Femme • Empowering connection across gaming, tech, and sports</footer>
@@ -92,7 +93,7 @@ function NavBar() {
       <span style={{flex:1}} />
       {user && (
         <div style={{display:'flex', alignItems:'center', gap:'1rem'}}>
-          <NavLink to="/notifications" className={({isActive}:{isActive:boolean})=> isActive? 'active' : ''} title="Notifications">
+          <NavLink to="/chat" className={({isActive}:{isActive:boolean})=> isActive? 'active' : ''} title="Chat">
             🔔
           </NavLink>
           <NavLink to={`/profile/${user.username}`} className={({isActive}:{isActive:boolean})=> isActive? 'active' : ''} style={{
