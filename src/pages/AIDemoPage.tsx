@@ -75,7 +75,16 @@ export default function AIDemoPage() {
       </div>
 
       {result && (
-        <pre style={{ whiteSpace: 'pre-wrap', marginTop: 16, padding: 12, background: '#f7f7f7', borderRadius: 8 }}>
+        <pre
+          style={{
+            whiteSpace: 'pre-wrap',
+            marginTop: 16,
+            padding: 12,
+            background: '#f7f7f7',
+            borderRadius: 8,
+            color: '#000', // ensure analysis text is black
+          }}
+        >
           {result}
         </pre>
       )}
