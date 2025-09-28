@@ -85,3 +85,12 @@
   font-size: 1.05rem;
   line-height: 1.6;
 }
+
+/* Jua-styled title and labels to match homepage font */
+.jua-title {
+  font-family: 'Jua', cursive;
+}
+
+.convo-name {
+  font-family: 'Jua', cursive;
+}

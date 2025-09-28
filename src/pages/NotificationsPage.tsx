@@ -1,117 +1,76 @@
-import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useUserStore } from '../store/userStore';
+import './messages-style.css';
 
-type Message = { id: string; from: string; text: string; at: number };
-type Thread = { id: string; name: string; type: 'dm' | 'group'; last?: string };
+type Notification =
+  | { id: string; type: 'message'; from: string; text: string; at: number }
+  | { id: string; type: 'friend_request'; from: string; at: number };
 
-// Seed data (replace with API later)
-const seedDMs: Thread[] = [
-  { id: 'u1', name: 'Alex', type: 'dm', last: 'Hey!' },
-  { id: 'u2', name: 'Sam', type: 'dm', last: 'Can you review my PR?' },
+const seedNotifications: Notification[] = [
+  { id: 'n1', type: 'message', from: 'Alex', text: 'Hey! Want to squad up tonight?', at: Date.now() - 1000 * 60 * 5 },
+  { id: 'n2', type: 'friend_request', from: 'Sam', at: Date.now() - 1000 * 60 * 60 },
+  { id: 'n3', type: 'message', from: 'Maya', text: 'GGs earlier! That clutch was insane 🔥', at: Date.now() - 1000 * 60 * 90 },
 ];
-const seedGroups: Thread[] = [
-  { id: 'g1', name: 'Valorant Queens', type: 'group', last: 'Scrim tonight?' },
-  { id: 'g2', name: 'Indie Dev Jams', type: 'group', last: 'Theme ideas?' },
-];
+
+function timeAgo(ms: number) {
+  const mins = Math.floor((Date.now() - ms) / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  return `${days}d ago`;
+}
 
 export default function NotificationsPage() {
   const user = useUserStore(s => s.user);
-  const [tab, setTab] = useState<'dm' | 'group'>('dm');
-  const [selected, setSelected] = useState<Thread | null>(null);
-  const [messages, setMessages] = useState<Record<string, Message[]>>({
-    u1: [
-      { id: 'm1', from: 'Alex', text: 'Hey!', at: Date.now() - 1000 * 60 * 20 },
-      { id: 'm2', from: user?.firstName || 'You', text: 'What’s up?', at: Date.now() - 1000 * 60 * 19 },
-    ],
-    u2: [{ id: 'm3', from: 'Sam', text: 'Can you review my PR?', at: Date.now() - 1000 * 60 * 60 }],
-    g1: [{ id: 'm4', from: 'Maya', text: 'Scrim tonight?', at: Date.now() - 1000 * 60 * 5 }],
-    g2: [{ id: 'm5', from: 'Lena', text: 'Theme ideas?', at: Date.now() - 1000 * 60 * 45 }],
-  });
-  const [draft, setDraft] = useState('');
-
-  const threads = tab === 'dm' ? seedDMs : seedGroups;
-
-  const handleSend = () => {
-    if (!selected || !draft.trim()) return;
-    const id = crypto.randomUUID?.() ?? String(Math.random());
-    const from = user?.firstName || 'You';
-    setMessages(prev => ({
-      ...prev,
-      [selected.id]: [...(prev[selected.id] || []), { id, from, text: draft.trim(), at: Date.now() }],
-    }));
-    setDraft('');
-  };
 
   return (
-    <div className="grid" style={{ gap: '1rem' }}>
-      <header className="card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div>
-          <h2>Messages & Notifications</h2>
-          <p style={{ margin: 0 }}>DMs and group chats</p>
-        </div>
-        <Link to="/"><button>Home</button></Link>
-      </header>
+    <div className="container">
+      <h1 className="jua-title" style={{ marginBottom: 12 }}>Notifications</h1>
 
-      <div className="grid" style={{ gridTemplateColumns: '280px 1fr', gap: '1rem' }}>
-        <aside className="card" style={{ padding: 0 }}>
-          <div style={{ display: 'flex', gap: 8, padding: 12, borderBottom: '1px solid var(--border,#eee)' }}>
-            <button onClick={() => setTab('dm')} className={tab === 'dm' ? 'primary' : ''}>DMs</button>
-            <button onClick={() => setTab('group')} className={tab === 'group' ? 'primary' : ''}>Groups</button>
-          </div>
-          <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-            {threads.map(t => (
-              <li key={t.id}>
-                <button
-                  style={{ width: '100%', textAlign: 'left', padding: '12px 14px', border: 'none', background: selected?.id === t.id ? 'var(--surface-2,#f6f6f6)' : 'transparent' }}
-                  onClick={() => setSelected(t)}
-                >
-                  <div style={{ fontWeight: 600 }}>{t.name}</div>
-                  {t.last && <div style={{ opacity: 0.7, fontSize: 12, marginTop: 2 }}>{t.last}</div>}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </aside>
+      <section className="panel-purple" style={{ padding: 16 }}>
+        <header style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+          <div style={{ fontWeight: 800, fontSize: '1.1rem' }}>What’s new</div>
+          <span className="tag">For @{user?.username || 'you'}</span>
+          <span style={{ flex: 1 }} />
+          <Link to="/messages"><button className="btn-white">Open Messages</button></Link>
+        </header>
 
-        <main className="card" style={{ display: 'flex', flexDirection: 'column' }}>
-          {!selected ? (
-            <div style={{ opacity: 0.7, textAlign: 'center', margin: '4rem 0' }}>Select a conversation to start chatting.</div>
-          ) : (
-            <>
-              <div style={{ borderBottom: '1px solid var(--border,#eee)', paddingBottom: 8, marginBottom: 8 }}>
-                <h3 style={{ margin: 0 }}>{selected.name}</h3>
-                <div style={{ fontSize: 12, opacity: 0.7 }}>{selected.type === 'dm' ? 'Direct Message' : 'Group Chat'}</div>
-              </div>
-              <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {(messages[selected.id] || []).map(m => (
-                  <div key={m.id} style={{ alignSelf: m.from === (user?.firstName || 'You') ? 'flex-end' : 'flex-start', maxWidth: '70%' }}>
-                    <div className="card" style={{ padding: '8px 10px' }}>
-                      <div style={{ fontSize: 12, opacity: 0.6, marginBottom: 4 }}>{m.from}</div>
-                      <div>{m.text}</div>
+        <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+          {seedNotifications.map(n => (
+            <li key={n.id} style={{ padding: '12px 8px', borderTop: '1px solid rgba(255,255,255,0.15)' }}>
+              {n.type === 'message' ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div className="convo-chip">{n.from.charAt(0).toUpperCase()}</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 700 }}>
+                      New message from {n.from}
+                      <span style={{ opacity: 0.8, fontWeight: 500 }}> • {timeAgo(n.at)}</span>
+                    </div>
+                    <div style={{ opacity: 0.9, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{n.text}</div>
+                  </div>
+                  <Link to="/messages"><button className="btn-purple">View</button></Link>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div className="convo-chip">{n.from.charAt(0).toUpperCase()}</div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 700 }}>
+                      {n.from} sent you a friend request
+                      <span style={{ opacity: 0.8, fontWeight: 500 }}> • {timeAgo(n.at)}</span>
                     </div>
                   </div>
-                ))}
-              </div>
-              <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-                <input
-                  value={draft}
-                  onChange={e => setDraft(e.target.value)}
-                  placeholder="Type a message…"
-                  style={{ flex: 1 }}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSend();
-                    }
-                  }}
-                />
-                <button onClick={handleSend}>Send</button>
-              </div>
-            </>
-          )}
-        </main>
-      </div>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <Link to="/connections"><button className="btn-white">Review</button></Link>
+                    <Link to="/friends"><button className="btn-purple">Friends</button></Link>
+                  </div>
+                </div>
+              )}
+            </li>
+          ))}
+        </ul>
+      </section>
     </div>
   );
 }

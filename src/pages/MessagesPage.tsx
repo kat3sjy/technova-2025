@@ -34,7 +34,7 @@ export default function MessagesPage() {
 
   return (
     <div className="container">
-      <h1 style={{ marginBottom: 12 }}>Messages</h1>
+      <h1 className="jua-title" style={{ marginBottom: 12 }}>Messages</h1>
       {error && <div style={{ color: 'tomato', marginBottom: 8 }}>{error}</div>}
 
       <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: 16, alignItems: 'stretch' }}>
@@ -66,7 +66,7 @@ export default function MessagesPage() {
                         {(c.name || c.id).charAt(0).toUpperCase()}
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontWeight: 700 }}>{c.name || c.id}</div>
+                        <div className="convo-name" style={{ fontWeight: 700 }}>{c.name || c.id}</div>
                         {c.last && (
                           <div style={{ opacity: 0.75, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontSize: '.85rem' }}>
                             <span style={{ color: c.last.userId === userId ? '#8ef' : '#fea', fontWeight: 600 }}>{c.last.userId === userId ? 'You' : c.last.userId}:</span>{' '}
@@ -103,19 +103,19 @@ export default function MessagesPage() {
 
               <div ref={listRef} className="messages-body" style={{ flex: 1, overflowY: 'auto', paddingRight: 4 }}>
                 {(convo.messages || []).map(m => (
-                  <div key={m.id} style={{ marginBottom: 10, display: 'flex', justifyContent: m.userId === userId ? 'flex-end' : 'flex-start' }}>
+                  <div key={m.id} style={{ marginBottom: 10, display: 'flex', justifyContent: m.userId === userId ? 'flex-start' : 'flex-end' }}>
                     <div
                       style={{
                         maxWidth: '70%',
-                        background: m.userId === userId ? 'linear-gradient(135deg,#1f6feb,#8ecbff)' : '#14171d',
-                        color: m.userId === userId ? '#0a0c10' : '#f5f7fa',
+                        background: m.userId === userId ? '#14171d' : 'linear-gradient(135deg,#1f6feb,#8ecbff)',
+                        color: m.userId === userId ? '#f5f7fa' : '#0a0c10',
                         padding: '8px 12px',
                         borderRadius: 12,
                         border: '1px solid rgba(255,255,255,0.15)'
                       }}
                     >
-                      <div style={{ fontSize: '.85rem', opacity: 0.85, marginBottom: 4 }}>
-                        {m.userId === userId ? 'You' : m.userId}
+                      <div className="convo-name" style={{ fontSize: '.85rem', opacity: 0.85, marginBottom: 4 }}>
+                        {m.userId === userId ? 'You' : (m.userId || '')}
                       </div>
                       <div>{m.text}</div>
                     </div>
