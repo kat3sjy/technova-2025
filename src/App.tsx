@@ -9,7 +9,6 @@ import FocusAreasPage from './pages/FocusAreasPage';
 import ExperienceGoalsPage from './pages/ExperienceGoalsPage';
 import BioPicturePage from './pages/BioPicturePage';
 import SettingsPage from './pages/SettingsPage';
-import ProfileSettingsPage from './pages/ProfileSettingsPage';
 import LoginPage from './pages/LoginPage';
 import SignUpPage from './pages/SignUpPage';
 import ConnectionsPage from './pages/ConnectionsPage';
