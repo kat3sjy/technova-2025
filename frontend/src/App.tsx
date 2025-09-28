@@ -26,6 +26,7 @@ export default function App() {
               <Route path="/notifications" element={<NotificationsPage />} />
               <Route path="/friends" element={<FriendsPage />} />
               <Route path="/chat" element={<ChatPage />} />
+              <Route path="/gamemap" element={<GameMapPage />} />
             </Routes>
           </div>
           <footer>© {new Date().getFullYear()} Technova Networking • Empowering connection across gaming, tech, and sports</footer>

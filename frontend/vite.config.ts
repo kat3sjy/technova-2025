@@ -7,7 +7,17 @@ export default defineConfig({
     host: 'localhost',
     port: 5173,
     strictPort: true,
-    open: true
+    open: true,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5000',
+        changeOrigin: true
+      },
+      '/socket.io': {
+        target: 'http://localhost:5000',
+        ws: true
+      }
+    }
   },
   preview: {
     host: 'localhost',

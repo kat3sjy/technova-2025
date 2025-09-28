@@ -25,19 +25,7 @@ const UserSchema = new mongoose.Schema(
     bio: { type: String, default: "" },
     avatar: { type: AvatarSchema, default: () => ({}) },
     vibeTags: { type: [String], default: [] },
-    safety: { type: SafetySchema, default: () => ({}) },
-    friends: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
-    notifications: {
-      type: [
-        {
-          type: { type: String, enum: ["match", "dm"], required: true },
-          from: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-          message: { type: String },
-          status: { type: String, enum: ["pending", "approved", "rejected"], default: "pending" }
-        }
-      ],
-      default: () => []
-    }
+    safety: { type: SafetySchema, default: () => ({}) }
   },
   { timestamps: true }
 );
