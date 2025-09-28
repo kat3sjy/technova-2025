@@ -7,6 +7,14 @@ const UserSchema = new mongoose.Schema(
     passwordHash: { type: String, required: true },
     email: { type: String, trim: true },
     emailLower: { type: String }, // removed inline index
+    firstName: { type: String, trim: true },
+    lastName: { type: String, trim: true },
+    tags: { type: [String], default: [] },
+    experienceLevel: { type: String, trim: true },
+    goals: { type: String, trim: true },
+    bio: { type: String, trim: true },
+    location: { type: String, trim: true },
+    avatarUrl: { type: String, trim: true },
   },
   { timestamps: true, collection: 'users' }
 );
@@ -37,6 +45,14 @@ UserSchema.methods.toSafeJSON = function () {
     id: this._id,
     username: this.username,
     email: this.email || undefined,
+    firstName: this.firstName || '',
+    lastName: this.lastName || '',
+    tags: Array.isArray(this.tags) ? this.tags : [],
+    experienceLevel: this.experienceLevel || '',
+    goals: this.goals || '',
+    bio: this.bio || '',
+    location: this.location || '',
+    avatarUrl: this.avatarUrl || undefined,
     createdAt: this.createdAt,
     updatedAt: this.updatedAt,
   };

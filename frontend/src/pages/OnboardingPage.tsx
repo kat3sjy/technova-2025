@@ -99,26 +99,19 @@ export default function OnboardingPage() {
         credentials: 'include',
         body: JSON.stringify({
           username: safeUsername,
-          password: form.password,
-          firstName: form.firstName,
-          lastName: form.lastName,
-          location: form.location,
-          tags: form.areas,
-          bio: form.bio,
-          goals: form.goals,
-          experienceLevel: form.experienceLevel
+          password: form.password
         })
       });
       if (!signupRes.ok && signupRes.status !== 409) {
         const j = await signupRes.json().catch(() => ({}));
-        throw new Error(j?.error || 'Failed to create profile');
+        throw new Error(j?.error || 'Failed to create account');
       }
-    } catch (e: any) {
-      // If 409 username taken, proceed to profile step
+    } catch (e) {
+      // proceed if 409
     }
 
-    const combinedLocation = form.country && form.city ? `${form.city}, ${form.country}` : form.country || form.city || '';
-    const profileRes = await fetch(`${API_BASE}/api/profile`, {
+    // Save profile fields into the users collection
+    const profileRes = await fetch(`${API_BASE}/api/users/profile`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -130,27 +123,21 @@ export default function OnboardingPage() {
         experienceLevel: form.experienceLevel,
         goals: form.goals,
         bio: form.bio,
-        location: combinedLocation
+        location: form.location
       })
     });
+
     if (!profileRes.ok) {
       const j = await profileRes.json().catch(() => ({}));
       setUsernameError(j?.error || 'Unable to save profile');
       return;
     }
-    const userDoc = await profileRes.json();
-    setUser({
-      id: userDoc._id,
-      username: userDoc.username,
-      firstName: userDoc.firstName || form.firstName,
-      lastName: userDoc.lastName || form.lastName,
-      areas: userDoc.tags || form.areas,
-      goals: userDoc.goals || form.goals,
-      experienceLevel: userDoc.experienceLevel || form.experienceLevel,
-      bio: userDoc.bio || form.bio,
-      location: userDoc.location || form.location,
-      createdAt: userDoc.createdAt || new Date().toISOString()
-    });
+
+    const out = await profileRes.json().catch(() => ({} as any));
+    const saved = out?.user || out;
+
+    // Persist to store
+    setUser(saved);
   }
 
   const steps = [

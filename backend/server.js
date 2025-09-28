@@ -81,7 +81,21 @@ function verifyPassword(password, stored) {
 function sanitizeUser(u) {
   if (!u) return null;
   if (typeof u.toSafeJSON === 'function') return u.toSafeJSON();
-  return { id: u._id, username: u.username, email: u.email, createdAt: u.createdAt, updatedAt: u.updatedAt };
+  return {
+    id: u._id,
+    username: u.username,
+    email: u.email,
+    firstName: u.firstName || '',
+    lastName: u.lastName || '',
+    tags: Array.isArray(u.tags) ? u.tags : [],
+    experienceLevel: u.experienceLevel || '',
+    goals: u.goals || '',
+    bio: u.bio || '',
+    location: u.location || '',
+    avatarUrl: u.avatarUrl || undefined,
+    createdAt: u.createdAt,
+    updatedAt: u.updatedAt
+  };
 }
 
 app.post('/api/auth/signup', async (req, res) => {
@@ -141,6 +155,42 @@ app.post('/api/auth/login', async (req, res) => {
     return res.json({ user: sanitizeUser(user) });
   } catch (err) {
     console.error('[auth.login.v2] error:', err);
+    return res.status(500).json({ error: 'internal error' });
+  }
+});
+
+// Upsert profile fields into the existing user document (users collection)
+app.post('/api/users/profile', async (req, res) => {
+  try {
+    const { username, ...rest } = req.body || {};
+    if (!username) return res.status(400).json({ error: 'username is required' });
+
+    const usernameLower = String(username).trim().toLowerCase();
+    const user = await User.findOne({ usernameLower });
+    if (!user) return res.status(404).json({ error: 'user not found' });
+
+    // Allow only known profile fields
+    const allowed = ['firstName','lastName','tags','experienceLevel','goals','bio','location','avatarUrl'];
+    const update = {};
+    for (const k of allowed) {
+      if (k in rest) {
+        if (k === 'tags' && Array.isArray(rest[k])) {
+          update[k] = rest[k].map(String);
+        } else if (typeof rest[k] !== 'undefined') {
+          update[k] = rest[k];
+        }
+      }
+    }
+
+    const saved = await User.findOneAndUpdate(
+      { usernameLower },
+      { $set: update },
+      { new: true }
+    );
+
+    return res.json({ user: sanitizeUser(saved) });
+  } catch (err) {
+    console.error('[users.profile] error:', err);
     return res.status(500).json({ error: 'internal error' });
   }
 });
