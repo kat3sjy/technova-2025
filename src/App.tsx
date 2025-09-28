@@ -53,7 +53,7 @@ export default function App() {
             <Route path="/ai-demo" element={<AIDemoPage />} />
             </Routes>
           </div>
-          <footer>© {new Date().getFullYear()} Technova Networking • Empowering connection across gaming, tech, and sports</footer>
+          <footer>© {new Date().getFullYear()} Ctrl+Femme • Empowering connection across gaming, tech, and sports</footer>
         </div>
       </ErrorBoundary>
     </UserStoreProvider>
@@ -78,7 +78,7 @@ function NavBar() {
   const links = user ? authedLinks : publicLinks;
   return (
     <nav aria-label="Main navigation" style={{display:'flex', alignItems:'center', gap:'.75rem', flexWrap:'wrap'}}>
-      <strong style={{marginRight:'2rem', fontSize:'1.2rem', fontWeight:'700', color:'#ffffff'}}>Technova</strong>
+      <strong style={{marginRight:'2rem', fontSize:'1.2rem', fontWeight:'700', color:'#ffffff'}}>Ctrl+Femme</strong>
       {links.map(l => (
         <NavLink
           key={l.to}
