@@ -42,12 +42,6 @@ export default function HomePage() {
               </>
             )}
           </div>
-          {user && (
-            <Link to={`/profile/${user.username}`}>
-              <button>Your Profile</button>
-            </Link>
-          )}
-          <span style={{ marginLeft: 8 }} />
         </div>
       </div>
 

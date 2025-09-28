@@ -53,6 +53,7 @@ export default function App() {
               <Route path="/friends" element={<FriendsPage />} />
               <Route path="/ai-demo" element={<AIDemoPage />} />
               <Route path="/chat" element={<ChatPage />} />
+              <Route path="/personal-info" element={<PersonalInfoPage />} />
               {/* Redirect legacy /messages -> /chat */}
               <Route path="/messages" element={<Navigate to="/chat" replace />} />
             </Routes>
